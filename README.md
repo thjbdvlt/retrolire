@@ -106,7 +106,7 @@ Unlike `cite`, the whole quote is output (with the citation key).
 
 ### open
 
-The `open` action opens a file associated with an entry. If the environment variable `$OPENER` is defined (and it is an executable command), it is used to open the file. Otherwise, the file is opened using [xdg-open](https://linux.die.net/man/1/xdg-open), which opens a file by choosing a program corresponding to the extension of that file.
+The `open` action opens a file associated with an entry. By default, [xdg-open](https://linux.die.net/man/1/xdg-open) to define the software to use (depending on the extension), but it can be changed in the config file.
 
 ```bash
 retrolire open -v 'author.quintane' -v 'publisher.^p\.?o\.?l$'
