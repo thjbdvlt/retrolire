@@ -2,7 +2,7 @@
 name = "retrolire"
 authors = [{name="thjbdvlt"}]
 version = "0.1.0"
-description = "gestion paresseuse et minimale de données bibliographiques."
+description = "command line bibliography management with fzf and postgresql"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
