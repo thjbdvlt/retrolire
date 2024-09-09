@@ -230,8 +230,7 @@ a normal paragraph
 
 > another quote (p. 32)
 
-> here too,
-another quote (32-33)
+> here too, another quote (32-33)
 
 another normal paragraph
 ```
