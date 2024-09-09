@@ -1,0 +1,14 @@
+*.egg-info
+__pycache__
+archives
+bin
+build
+src/*.o
+test.md
+test.pdf
+test.sh
+tests
+venv
+check.sh
+valgrind-output.txt
+.tags
