@@ -27,7 +27,7 @@ install: ./bin/retrolire
 	# create the directory for the data (mainly schema.sql)
 	mkdir -p $(DATA_DIR)
 	# copy data
-	cp ./completion.bash ./schema.sql -r templates $(DATA_DIR)/
+	cp ./bash/completion.bash ./schema.sql -r templates $(DATA_DIR)/
 	# install python command line programs
 	pipx install .
 
