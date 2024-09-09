@@ -1,17 +1,47 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "commands.h"
 #include "edit.h"
 #include "pgpopen2.h"
 #include "print.h"
 #include "underscore.h"
 #include "util.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
-/* queryp2 -- concatenate SELECT statement and clauses + send +
- * popen2.
+/* queryp2
+ * =======
  *
+ * concatenate SELECT + conditional clauses, then send and popen2.
+ *
+ * parameters
+ * ----------
+ *
+ * slct (struct Stmt*):
+ *      the SELECt statement.
+ *
+ * cnd (struct Stmt*):
+ *      the conditional clauses to add at the end of the Stmt.
+ *
+ * lastedit (int):
+ *      order clause.
+ *
+ * npar (int):
+ *      the number of parameters for the SQL.
+ *
+ * params (const char* const):
+ *      the SQL parameters.
+ *
+ * sh (struct ShCmd):
+ *      the Shell Command.
+ *
+ * dest (char*):
+ *      pointer to write the result of the Shell Command.
+ *
+ * pick (int):
+ *      if the user must pick through the Shell Command or not.
+ *      (if value is 0, then it's only output to stdout).
  * */
 int
 queryp2(struct Stmt* slct,
@@ -70,11 +100,24 @@ queryp2(struct Stmt* slct,
   return 1;
 }
 
-/* import entries from csl-json, bibtex, doi, isbn or edit a
+/* import
+ * ======
+ *
+ * import entries from csl-json, bibtex, doi, isbn or edit a
  * template. that function use a shell script 'protolire', because
  * it's mainly using shell commands that i do that (some programs,
  * like pandoc or isbn_meta, and some python library like orjson and
- * psycopg). */
+ * psycopg).
+ *
+ * parameters
+ * ----------
+ *
+ * method (char*):
+ *      the method to get the refereneces: DOI, ISBN, JSON, bibtex.
+ *
+ * identifier (char*):
+ *      the identifier (DOI, ISBN) or file path (JSON, bibtex)
+ * */
 int
 import(char* method, char* identifier)
 {
@@ -136,7 +179,27 @@ import(char* method, char* identifier)
 #undef LONGEST_METHOD
 }
 
-/* list entries that matches filters criterias */
+/* list
+ * ====
+ *
+ * list entries that matches filters criterias.
+ *
+ * parameters
+ * ----------
+ *
+ * cnd (struct Stmt*):
+ *      the actual conditional clause.
+ *
+ * npar (int):
+ *      the number of parameter for the SQL.
+ *
+ * params (const char*):
+ *      the parameters for the SQL.
+ *
+ * arg (char*):
+ *      the first positional argument, that determine if tags are
+ *      shown.
+ * */
 int
 list(struct Stmt* cnd,
   int npar,
@@ -231,6 +294,23 @@ list(struct Stmt* cnd,
 #undef CMD
 }
 
+/* json
+ * ====
+ *
+ * list entries that matches filters criterias in JSON format.
+ *
+ * parameters
+ * ----------
+ *
+ * cnd (struct Stmt*):
+ *      the actual conditional clause.
+ *
+ * npar (int):
+ *      the number of parameter for the SQL.
+ *
+ * params (const char*):
+ *      the parameters for the SQL.
+ * */
 int
 json(struct Stmt* cnd, int npar, const char* params[MAXOPT])
 {
@@ -264,6 +344,20 @@ json(struct Stmt* cnd, int npar, const char* params[MAXOPT])
   return 1;
 }
 
+/* make_stmt_quote
+ * ===============
+ *
+ * make the SQL for quotes.
+ *
+ * parameters
+ * ----------
+ *
+ * slct (struct Stmt*):
+ *      the actual SQL, to be reset.
+ *
+ * sh (struct ShCmd*):
+ *      the Shell Command.
+ * */
 int
 make_stmt_quote(struct Stmt* slct, struct ShCmd* sh)
 {
@@ -290,6 +384,20 @@ make_stmt_quote(struct Stmt* slct, struct ShCmd* sh)
 #undef STMT_QUOTE
 }
 
+/* make_stmt_refer
+ * ===============
+ *
+ * make the SQL for refer (concept).
+ *
+ * parameters
+ * ----------
+ *
+ * slct (struct Stmt*):
+ *      the actual SQL, to be reset.
+ *
+ * sh (struct ShCmd*):
+ *      the Shell Command.
+ * */
 int
 make_stmt_refer(struct Stmt* slct, struct ShCmd* sh)
 {
@@ -316,7 +424,21 @@ make_stmt_refer(struct Stmt* slct, struct ShCmd* sh)
 #undef STMT_CONCEPT
 }
 
-/* add a conditional clause for the OPEN command. */
+/* make_stmt_open
+ * ===============
+ *
+ * add a conditional clause for the 'open' command.
+ *
+ * parameters
+ * ----------
+ *
+ * cnd (struct Stmt*):
+ *      the conditional clauses.
+ *
+ * npar (int):
+ *      the number of parameters. used to determine if WHERE
+ *      or AND have to be used to append the clause.
+ * */
 int
 make_stmt_open(struct Stmt* cnd, int npar)
 {

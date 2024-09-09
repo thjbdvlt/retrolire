@@ -1,7 +1,8 @@
-#include "stmt.h"
-#include "../config.h"
 #include <stdio.h>
 #include <string.h>
+
+#include "../config.h"
+#include "stmt.h"
 
 void
 init_stmt(struct Stmt* s, char* source, size_t total, size_t used)
