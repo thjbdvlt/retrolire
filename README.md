@@ -221,9 +221,20 @@ When a reading note is modified (or added), its content is parsed to find and ex
 
 If some __quotes__ are found, they are indexed and put in another table: with the command `quote`, the user can get these quotes (formatted to be put in pandocs-markdown document).
 
-The parsing/extraction requires that the reading note is written in [markdown](https://pandoc.org/chunkedhtml-demo/8-pandocs-markdown.html). Only _block quotes_ are indexed.
+The parsing/extraction requires that the reading note is written in [markdown](https://pandoc.org/chunkedhtml-demo/8-pandocs-markdown.html). Only blockquotes are indexed as quotes. Page number can be precised at the end of the quote, in parentheses or in brackets,:
 
-![](./img/blockquote-syntaxe.png)
+```markdown
+a normal paragraph
+
+> a quote [32]
+
+> another quote (p. 32)
+
+> here too,
+another quote (32-33)
+
+another normal paragraph
+```
 
 ### concepts
 

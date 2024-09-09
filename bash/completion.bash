@@ -6,13 +6,14 @@ _retrolire(){
     poss=
     suff=' '
     opts='--last --tag --var --search --quote --show-tags --id --move'
+    commands="edit open print quote refer add file list json cite update delete init"
     fileopts=
 
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     case "$prev" in
         retrolire)
-            poss="edit open print quote add import update delete init"
+            poss="$commands"
             ;;
         -v | --var)
             getter='_lfields'
