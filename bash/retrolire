@@ -1,0 +1,479 @@
+#!/bin/bash
+
+# PROTOTYPE FOR RETROLIRE
+
+set -e -o pipefail
+
+version=0.1.0
+
+data_dir="/usr/share/retrolire"
+exact=--no-exact
+dbname="${RETROLIRE_DBNAME:=retrolire}"
+files_dir="$RETROLIRE_FILES"
+isbn=
+condition=
+_id=
+move=
+print_help=
+show_tags=
+tags=
+r_search=
+quote=
+
+_psql() {
+    psql "${@}" -d "$dbname" --no-psqlrc -v ON_ERROR_STOP=true \
+        -v r="$r_search" -v i="$_id" -v tags="$tags" -v q="$quote"
+}
+
+pick() {
+    echo "select e.id, coalesce(e.title, e.url), jsonb_concat_values(coalesce(
+    e.author, e.editor, e.translator), ' ') ${show_tags}
+    from entry e ${condition}" | _psql -A -t -F $'\n\t' -0 |
+        fzf $exact -d '\n\t' --read0 --exit-0 --wrap \
+        --bind "enter:become(echo {1})" --preview-window=right,45% \
+        --preview "echo \"select preview(:'i')\" |
+        psql -d ${dbname} -v 'i={1}' -At -v ON_ERROR_STOP=true |
+            batcat --color=always -l markdown -p"
+}
+
+quote_() {
+    local qid block nl
+    if [ "$1" ] && [[ 'block' =~ ^$1 ]]
+    then block=true
+        {
+            if [ "$2" ] && [[ 'nl' =~ ^$2 ]]
+            then nl=true
+            else nl=false
+            fi
+        }
+    else block=false
+        nl=false
+    fi
+    append_condition "regexp_like(q.quote, :'q', 'i')"
+    qid="$(
+        echo "select q.id, e.id, q.quote from quote q join entry e 
+        on e.id = q.entry ${condition}" | _psql -A -t -F $'\n' -0 |
+            fzf $exact --read0 -d '\n' --nth 1 --with-nth 3 --wrap \
+            --preview-window bottom,5 --bind "enter:become(echo {1})" \
+            --preview "echo \"select short_entry_from_id(:'i')\" |
+            psql -v i={2} -d '$dbname' -AtF $'\n\n'"
+    )" && echo "select quote_to_string_from_id(:'qid', :'block'::boolean,
+    :'nl'::boolean)" | _psql -At -v qid="$qid" -v block="$block" -v nl="$nl"
+}
+
+edit_column() {
+    echo "update :\"t\" set :\"c\" = :'s' where id = :'i'" |
+        _psql -v t="$1" -v c="$2" -v s="$(
+    echo "select :\"c\" from :\"t\" where id = :'i'" |
+        _psql -At -v t="$1" -v c="$2" | vipe --suffix="$3")" 1>/dev/null
+}
+
+edit_note() {
+    ensure_entry
+    edit_column reading notes md
+}
+
+update_field() {
+    local table column ft
+    [ $# -gt 0 ] || _help "missing positional argument (FIELD): cancelled."
+    [ $# -lt 3 ] || _help "too much arguments ($#): cancelled"
+    if [ "$1" = tags ]
+    then table=reading; column=tags; ft=json
+    else table=entry; column="$1"; ft=txt
+    fi
+    check_field "$column"
+    ensure_entry
+    if [ $# -eq 2 ]
+    then
+        echo "update :\"t\" set :\"c\" = :'s' where \"id\" = :'i'" |
+            _psql -v t="$table" -v c="$column" -v s="$2" 1>/dev/null
+    else edit_column "$table" "$column" $ft
+    fi
+}
+
+check_id() {
+    [ "$(echo "select :'i' in (select id from entry)" | 
+        _psql -At)" = t ] || _help 'id not in database'
+}
+
+check_field() {
+    echo 'select :"field" from entry limit 0' |
+        _psql -v field="$1" >/dev/null 1>/dev/null || 
+        _help "unregistered field \"$1\": cancelled."
+}
+
+add_file() {
+    local new_fpath fpath
+    [ "$1" ] || _help "no file: cancelled."
+    [ -s "$1" ] || _help "file \"$1\" not found: cancelled."
+    fpath="$(realpath "$1")"
+    ensure_entry
+    [ "${move}" ] && {
+        new_fpath="${files_dir}/$(basename "$fpath")"
+        mv "$fpath" "$new_fpath"
+        fpath="$new_fpath"
+    }
+    echo "insert into file (filepath, entry)
+    select :'f', :'i' on conflict do nothing" |
+    _psql -v f="$fpath"
+}
+
+add_tag() {
+    local tags
+    ensure_entry
+    if [ "$1" ]
+    then tags="$1"
+    else tags="$(
+        echo "select distinct * from (
+            select jsonb_array_elements_text(tags) from reading
+        )" | _psql -At | fzf $exact --multi | tr '\n' ',' |
+            sed -r 's/\s*,\s*/,/;s/^,|,$//'
+    )"
+    fi
+    echo "select update_tags(:'i', :'tags')" | _psql
+}
+
+add_quote() {
+    [ "$1" ] || _help 'missing positional argument (QUOTE): cancelled.'
+    ensure_entry
+    quote="$1"
+    echo "insert into quote (entry, quote)
+    select :'i', :'q'" | _psql
+}
+
+add() {
+    ensure_entry
+    case "$1" in
+        t*) [[ 'tags' =~ $1 ]] || _help "not a valid argument: $1"
+            add_tag "${@:2}";;
+        f*) [[ 'file' =~ $1 ]] || _help "not a valid argument: $1"
+            add_file "${@:2}";;
+        q*) [[ 'quote' =~ $1 ]] || _help "not a valid argument: $1"
+            add_quote "${@:2}";;
+        *) _help "not a valid argument: $1"
+    esac
+}
+
+open_file() {
+    local choice
+    append_condition 'e.id in (select entry from file)'
+    ensure_entry
+    choice="$(echo "select filepath from file where entry = :'i'" |
+            _psql -At | grep -v '^$' | fzf $exact -0 -1 | xargs
+    )" || _help "no file: cancelled."
+    [ -s "$choice" ] || _help "file not found: $choice"
+    ${OPENER:=xdg-open} "$choice"
+}
+
+init_database() {
+    psql -c "create database ${dbname}"
+    for i in tables functions indexes quotes triggers constraints
+    do _psql < "${data_dir}/schema/${i}.sql"
+    done
+}
+
+from_file() {
+    [ -f "$2" ] || _help "file not found: $2"
+    case "$1" in
+        j*) copy_to < "$2" ;;
+        b*) pandoc -f bibtex -t csljson < "$2" | copy_to ;;
+        *) _help "unrecognized value for {json|bibtex}"
+    esac
+}
+
+ensure_entry() {
+    if [ -z "$_id" ]
+    then _id="$(pick)" || _help "cancelled."
+    else _id="$_id"
+    fi
+}
+
+has_variable() {
+    local IFS s i field value decode_val
+    echo "$1" | grep -E "[\"']" && _help "quotes (' or \") are not allowed in -v."
+    [ "$(echo "$1" | wc -l)" -gt 1 ] && _help "-v argument must be a single line."
+    IFS=","
+    for s in $1; do
+        echo "$s" | grep -E '^[[:alpha:]_-]+=' >/dev/null || _help "syntax error for: $s"
+        field="$(echo "$s" | cut -d '=' -f 1)"
+        check_field "$field"
+        value="$(echo "$s" | cut -d '=' -f 2 | base64)"
+        decode_val="rtrim(convert_from(decode('$value', 'base64'), 'UTF8'), E'\n')"
+        append_condition "regexp_like(e.\"$field\"::text, $decode_val, 'i')"
+    done
+}
+
+append_condition() {
+    local operator
+    if [ "$condition" ]
+    then operator=and
+    else operator=where
+    fi
+    condition="${condition} ${operator} ${1}"
+}
+
+get_isbn() {
+    local ref
+    [ "$1" ] || _help "needs a value (isbn): cancelled."
+    isbn="${isbn:=bnf openl wiki loc goob}"
+    for i in $isbn
+    do
+        echo "trying with source '$i'" >/dev/tty
+        ref="$(isbn_meta "$1" "$i" bibtex 2>/dev/null | grep -E -v '^\s*$' )" && break
+    done
+    [ "$ref" ] || _help "couldn't find a reference for isbn $1."
+    echo "$ref" >/dev/tty
+    echo "$ref" | vipe
+}
+
+get_doi() {
+    local result
+    [ "$1" ] || _help "needs a value (doi): cancelled."
+    result="$(isbn_doi2tex "$1")" ||
+        _help "couldn't find a reference for doi $1: cancelled"
+    echo "$result" | head -n 1 | grep -i '^usage' \
+        && _help "couldn't find a reference for doi $1: cancelled"
+    echo "$result"
+}
+
+print_() {
+    if [ "$1" ] && [[ 'json' =~ $1 ]]
+    then echo "select jsonb_pretty(jsonb_agg(to_csl(e)))
+        from entry e $condition" | _psql -At
+    elif [ "$1" ] && [[ 'tags' =~ $1 ]]
+    then { echo "select string_agg(tag, E'\t') from _tag" | _psql -At | fmt -w "$(tput cols)"; }
+    else [ "$_id" ] && append_condition "e.id = :'i'"
+        echo "select e.* $show_tags from entry e $condition" |
+        _psql -P 'format=wrapped' -x |
+            grep -v -E '^\s*\S+\s*\|\s*$' | sed -r 's/(\]-+)\+.*/\1/g' |
+            column --table --table-wrap 2 --separator '|' --output-separator '|'
+    fi
+}
+
+_confirm_delete() {
+    local answer
+    read -rp "delete '$3'? [yN]" answer
+    if [ "$answer" = 'y' ] || [ "$answer" = Y ]
+    then echo "delete from \"$1\" where id = :'x'" | _psql -v x="$2"
+    else echo 'cancelled.' >/dev/tty
+    fi
+}
+
+delete() {
+    local fp fid fpath
+    [ "$1" ] || _help 'needs positional argument: {entry|file}.'
+    case "$1" in
+        entry) ensure_entry && _confirm_delete "entry" "$_id" "$_id";;
+        file) fp="$(
+                echo "select f.id, f.filepath, e.title, jsonb_concat_values(
+                coalesce(e.author, e.editor, e.translator), ' ') from file f 
+                join entry e on e.id = f.entry $condition" |
+                    _psql -At -F $'\t' -0  | fzf -0 --read0 -d '\t' --nth 2.. \
+                    --with-nth 2.. --bind 'enter:become(echo {})'
+            )"
+            [ "$fp" ]  || _help 'cancelled'
+            fid="$(echo "$fp" | cut -d$'\t' -f 1)"
+            fpath="$(echo "$fp" | cut -d$'\t' -f 2)"
+            _confirm_delete 'file' "$fid" "$fpath";;
+        *) _help 'unrecognized value for {entry|file}.'
+    esac
+}
+
+copy_to() {
+    csl2psql - -d "$dbname" -t entry --temp _entry "${@}"
+    # echo "select _move_things();" | _psql 1>/dev/null &
+}
+
+edit_template() {
+    local f d empty ref
+    d="${data_dir}/templates"
+    f="${d}/${1}.bib"
+    [ -f "$f" ] || f="$(find "$d" -type f | fzf $exact -d / --nth -1 --with-nth -1)"
+    [ -f "$f" ] || _help "no file picked: cancelled."
+    empty="$(cat "$f")"
+    ref="$(echo "$empty" | vipe)"
+    [ "$ref" ] || _help "empty: cancelled"
+    [ "$ref" != "$empty" ]|| _help "unchanged: cancelled."
+    echo "$ref"
+}
+
+import_ref() {
+    local ref getter fetch
+    fetch=
+    case "$1" in
+        d*) [[ 'doi' =~ ^$1 ]] || _help "not a valid argument: $1"
+            getter=get_doi; fetch=true;;
+        i*) [[ 'isbn' =~ ^$1 ]] || _help "not a valid argument: $1"
+            getter=get_isbn; fetch=true;;
+        t*) [[ 'template' =~ ^$1 ]] || _help "not a valid argument: $1"
+            getter=edit_template; fetch=true;;
+        b*) [[ 'bibtex' =~ ^$1 ]] || _help "not a valid argument: $1"
+            getter=from_file;;
+        j*) [[ 'json' =~ ^$1 ]] || _help "not a valid argument: $1"
+            getter=from_file;;
+        *) _help;;
+    esac
+    if [ "$fetch" ]
+    then {
+        ref="$($getter "$2")"
+        csl=$(echo "$ref" | pandoc -f bibtex -t csljson) ||
+            _help "parsing error: cancelled."
+        echo "$csl" | copy_to -r id | grep --invert-match \
+            -E '^\s*$' >> "${data_dir}/history"
+        _id=$(tail -n 1 "${data_dir}/history")
+        print_ ""
+    }
+    else {
+        from_file "${@}"
+    }
+    fi
+}
+
+help="retrolire ACTION [OPTIONS]
+
+ACTIONS:
+      init: initiate the database.
+    import: import entries from a file (json/bibtex), a doi/isbn or a template.
+       add: add a file, a quote, or tags to an entry.
+    update: update a field of an entry (ex. title, author).
+      edit: edit reading notes in \$EDITOR (using vipe).
+      open: open a file.
+     quote: get a quote formated to be used in a pandoc (+ citeproc) markdown doc.
+      cite: get the id of an entry (citation key).
+     print: print the information of some entries (optionally to csl-json).
+    delete: delete an entry or a reference to a file.
+
+FILTER OPTIONS (filter entries for the fzf picking):
+    -t --tag TAG:  search for entries with some tags.
+    -s --SEARCH REGEX:  search for a pattern in the notes.
+    -v --variable KEY=VAL:  key-value search in CSL variable.
+    -q --quote REGEX:  search for a pattern in quotes.
+
+SELECT OPTIONS (fzf interface):
+    -e --exact:  exact match in fzf (fzf --exact: not fuzzy).
+    --show-tags:  list tags for in the fzf picker (add a line: '+tag1 +tag2...').
+
+GENERAL OPTIONS:
+    -i --id ID:  specified the entry id (no picking with fzf).
+    -l --last:  select the last selected entry (no picking with fzf).
+    --version:  print version
+    --help:  print help (general, or about specific action)
+
+ACTION-SPECIFIC OPTIONS:
+    link format --move:  move the file in the files directory (defined in the config).
+    print format --show-tags:  show tags in the record.
+"
+
+_help() {
+    echo -e "usage:\n      $help\n" >/dev/tty
+    [ "$1" ] && echo -e "$1\n" >/dev/tty
+    exit 1
+}
+
+args=$(getopt -n retrolire -o 'hs:e,mt:lr:i:q:v:' \
+    -l 'help,search:,id:,exact,move,version,tag:,show-tags,last,isbn-sources,quote:,variable:' \
+    -- "$@") || exit 1
+
+eval set -- "$args"
+
+while true ; do
+    case "$1" in
+        -t | --tag)
+            tags="${tags:+$tags,}${2}"
+            shift 2;;
+        -v | --variable)
+            has_variable "$2"
+            shift 2 ;;
+        -s | --search)
+            r_search="$2"
+            append_condition "(select regexp_like(notes,
+            :'r', 'i') from reading where id = e.id)"
+            shift 2;;
+        -q | --quote)
+            quote="$2"
+            append_condition "(select true in (select regexp_like(
+            quote, :'q', 'i') from quote where entry = e.id))"
+            shift 2;;
+        -i | --id)
+            _id="$2"
+            check_id
+            append_condition "e.id = :'i'"
+            shift 2;;
+        -l | --last)
+            _id="$(tail -n 1 "${data_dir}/history")"
+            check_id || pick
+            append_condition "e.id = :'i'"
+            shift 1;;
+        -m | --move) move=move
+            shift 1;;
+        --show-tags)
+            show_tags=", get_tags(e) as tags"
+            shift 1;;
+        --isbn-sources)
+            isbn="$2"
+            shift 1;;
+        -e | --exact)
+            exact=--exact
+            shift 1;;
+        --version)
+            echo "retrolire (version: $version)"
+            exit 0;;
+        -h | --help)
+            print_help='-h'
+            shift 1;;
+         --) shift; break ;;
+        *) shift;;
+    esac
+done
+
+[ "$tags" ] && {
+    tags="{$tags}"
+    append_condition "(select r.tags ?& :'tags' 
+    from reading r where r.id = e.id)"
+}
+
+case "${1}" in
+    c*) [[ cite =~ ^$1 ]] || _help "unknown action: $1"
+        _command=pick
+        help="retrolire cite [OPTIONS]";;
+    q*) [[ quote =~ ^$1 ]] || _help "unknown action: $1"
+        _command=quote_
+        help="retrolire quote [block] [nl] [OPTIONS]";;
+    p*) [[ print =~ ^$1 ]] || _help "unknown action: $1"
+        _command=print_
+        help="retrolire print [json] [OPTIONS]";;
+    e*) [[ 'edit' =~ ^$1 ]] || _help "unknown action: $1"
+        _command=edit_note
+        help="retrolire edit [OPTIONS]";;
+    o*) [[ 'open' =~ ^$1 ]] || _help "unknown action: $1"
+        _command=open_file
+        help="retrolire open [OPTIONS]";;
+    u*) [[ 'update' =~ ^$1 ]] || _help "unknown action: $1"
+        _command=update_field
+        help="retrolire update FIELD [VALUE] [OPTIONS]";;
+    im*) [[ 'import' =~ ^$1 ]] || _help "unknown action: $1"
+        _command=import_ref
+        help="retrolire import {doi|isbn|template|json|bibtex} {FILEPATH|DOI|ISBN} [--tag TAGS] [--isbn-sources SOURCES]";;
+    d*) [[ 'delete' =~ ^$1 ]] || _help "unknown action: $1"
+        _command=delete
+        help="retrolire delete {entry|file} [OPTIONS]";;
+    a*) [[ 'add' =~ ^$1 ]] || _help "unknown action: $1"
+        _command=add
+        help="retrolire add {file|tags|quote} VALUE [OPTIONS]";;
+    init)
+        _command=init_database
+        help="retrolire init ";;
+    '')
+        _help "no action specified: cancelled.";;
+    *)
+        _help "unknown action: ${1}";;
+esac
+
+if [ "$print_help" = '-h' ]
+then
+    _help
+else
+    "$_command" "${@:2}"
+    [ "$_id" ] && echo "$_id" >> "${data_dir}/history"
+    exit 0
+fi
