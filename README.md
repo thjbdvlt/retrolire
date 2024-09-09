@@ -249,8 +249,7 @@ concept
 
 ## configuration
 
-The configuration file is [./config.h](./config.h).
-The software needs to be recompiled (`make && make install`) for any value to be changed.
+The configuration file is [./config.h](./config.h). The software needs to be recompiled (`make && make install`) so the changes can be effective.
 
 ## completion (bash)
 
@@ -310,4 +309,3 @@ License [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 - [ ] SQLite instead of PostgreSQL.
 - [ ] PDF annotations extraction, using [pdfannots](https://github.com/0xabu/pdfannots).
 - [ ] Vim plugin (vim script).
-- [ ] Table `relation`, and `-r` filter.

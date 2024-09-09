@@ -5,8 +5,9 @@ CCFLAGS = -I /usr/include/postgresql -L /usr/lib/ -lpq \
 		  -Wno-unused-variable -Wno-unused-parameter
 
 # where the binary and the data will be installed
-DEST_DIR=/usr/bin
-DATA_DIR=/usr/share/retrolire
+PREFIX?=/usr/local
+BINDIR=$(PREFIX)/bin
+DATADIR=/usr/share/retrolire
 
 # the path to the binary (inside the project directory)
 bin=./bin/retrolire
@@ -20,20 +21,20 @@ $(bin): config.h bin
 
 install: ./bin/retrolire
 	# create the directory for the binary if it does not exists
-	mkdir -p $(DEST_DIR)
+	mkdir -p $(BINDIR)
 	# copy the binary (retrolire) and the bash script (protolire)
-	sudo cp $(bin) $(DEST_DIR)
-	sudo cp ./bash/protolire $(DEST_DIR)
+	sudo cp $(bin) $(BINDIR)
+	sudo cp ./bash/protolire $(BINDIR)
 	# create the directory for the data (mainly schema.sql)
-	mkdir -p $(DATA_DIR)
+	mkdir -p $(DATADIR)
 	# copy data
-	cp ./bash/completion.bash ./schema.sql -r templates $(DATA_DIR)/
+	cp ./bash/completion.bash ./schema.sql -r templates $(DATADIR)/
 	# install python command line programs
 	pipx install .
 
 uninstall:
 	# remove the binary and the bash script
-	sudo rm -rf $(DEST_DIR)/retrolire $(DEST_DIR)/protolire $(DATA_DIR)
+	sudo rm -rf $(BINDIR)/retrolire $(BINDIR)/protolire $(DATADIR)
 	# uninstall python command line programs
 	pipx uninstall retrolire
 
