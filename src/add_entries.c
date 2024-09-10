@@ -254,6 +254,9 @@ command_add_doi(char* doi)
     // format the bibtex file.
     format_bibtex(tmp_filepath);
 
+    // edit the formatted filepath
+    edit_file(tmp_filepath);
+
     // add the bibtex to the database.
     command_add_bibtex(tmp_filepath, 1);
   }
@@ -334,8 +337,7 @@ format_bibtex(char* filepath)
   // remove temporary file
   remove(tmp_filepath);
 
-  // edit the formatted filepath
-  edit_file(filepath);
-
   return 1;
 }
+
+// TODO: add templates
