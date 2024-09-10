@@ -57,9 +57,13 @@ command_add_bibtex(char* filepath, int remove_file)
 {
 
   // create a temporary file to put the JSON
-  char tmp_filepath[] = "/tmp/retrolire.bibtex.XXXXXX";
-  if (mkstemp(tmp_filepath) == -1)
+  char tmp_filepath[] = "/tmp/retrolire.XXXXXX";
+  if (mkstemp(tmp_filepath) == -1) {
+    if (remove_file) {
+      remove(filepath);
+    }
     return 0;
+  }
 
   // the pandoc command to convert the bibtex into a csl-json
   char* bibtex2json[] = { "pandoc",
@@ -78,7 +82,11 @@ command_add_bibtex(char* filepath, int remove_file)
 
   // error if fork fails
   if (pid == -1) {
+    // remove both files on error
     remove(tmp_filepath);
+    if (remove_file) {
+      remove(filepath);
+    }
     perror("fork");
     return 0;
   }
@@ -90,10 +98,28 @@ command_add_bibtex(char* filepath, int remove_file)
   }
 
   else {
-    // wait for the subprocess to end, then call the function that
-    // will put the CSL-JSON in the database (using the python
-    // tool).
-    wait(NULL);
+
+    // wait for the subprocess to check its status
+    int status;
+    if (waitpid(pid, &status, 0) < 0) {
+      remove(tmp_filepath);
+      perror("wait");
+      exit(254);
+    }
+
+    // check the exit status from the previous command.
+    if (WIFEXITED(status)) {
+      // get the status of the subprocess.
+      int sub_status = WEXITSTATUS(status);
+      if (sub_status == 1) {
+        // if the exit status is 1 (fail), exit the program.
+        fputs("error: cancelled.\n", stderr);
+        remove(tmp_filepath);
+        exit(EXIT_FAILURE);
+      }
+    }
+
+    // add the CSL-JSON file in the database, using csl2psql
     command_add_json(tmp_filepath, 1);
 
     // remove the file
@@ -143,10 +169,28 @@ command_add_isbn(char* isbn)
   }
 
   else {
-    // wait for the subprocess to end, then call the function that
-    // will put the CSL-JSON in the database (using the python
-    // tool).
-    wait(NULL);
+
+    // wait for the subprocess to check its status
+    int status;
+    if (waitpid(pid, &status, 0) < 0) {
+      remove(tmp_filepath);
+      perror("wait");
+      exit(254);
+    }
+
+    // check the exit status from the previous command.
+    if (WIFEXITED(status)) {
+      // get the status of the subprocess.
+      int sub_status = WEXITSTATUS(status);
+      if (sub_status == 1) {
+        // if the exit status is 1 (fail), exit the program.
+        fputs("error: cancelled.\n", stderr);
+        remove(tmp_filepath);
+        exit(EXIT_FAILURE);
+      }
+    }
+
+    // add the generated bibtex file to the database.
     command_add_bibtex(tmp_filepath, 1);
   }
 
