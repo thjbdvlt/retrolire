@@ -121,32 +121,32 @@ int
 command_add(char* method, char* identifier)
 {
 
-    if (strstarts("doi", method)){
-        // TODO
-    }
+  if (strstarts("doi", method)) {
+    // TODO
+  }
 
-    else if (strstarts("isbn", method)){
-        command_add_isbn(identifier);
-    }
+  else if (strstarts("isbn", method)) {
+    command_add_isbn(identifier);
+  }
 
-    else if (strstarts("bibtex", method)){
-        command_add_bibtex(identifier, 0);
-    }
+  else if (strstarts("bibtex", method)) {
+    command_add_bibtex(identifier, 0);
+  }
 
-    else if (strstarts("json", method)){
-        command_add_json(identifier, 0);
-    }
+  else if (strstarts("json", method)) {
+    command_add_json(identifier, 0);
+  }
 
-    else if (strstarts("template", method)){
-        // TODO
-    }
+  else if (strstarts("template", method)) {
+    // TODO
+  }
 
-    else {
-      fprintf(
-        stderr, "not an available method for 'add': %s\n", method);
-    }
+  else {
+    fprintf(
+      stderr, "not an available method for 'add': %s\n", method);
+  }
 
-    return 1;
+  return 1;
 }
 
 /* list -- list entries that matches filters criterias.
@@ -382,7 +382,8 @@ make_stmt_refer(struct Stmt* slct, struct ShCmd* sh)
 #undef STMT_CONCEPT
 }
 
-/* make_stmt_open -- add a conditional clause for the 'open' command.
+/* make_stmt_open -- add a conditional clause for the 'open'
+ * command.
  *
  * parameters
  * ----------
@@ -418,7 +419,7 @@ make_stmt_open(struct Stmt* cnd, int npar)
  *
  *  pos (char*[MAXPOS]):
  *      positional arguments.
- *  
+ *
  *  npos (int):
  *      number of positional arguments.
  * */
@@ -449,7 +450,7 @@ command_tag_edit(char* id, char* pos[MAXPOS], int npos)
  *
  *  pos (char*[MAXPOS]):
  *      positional arguments.
- *  
+ *
  *  npos (int):
  *      number of positional arguments.
  * */
@@ -474,7 +475,7 @@ command_edit(char* id, char* pos[MAXPOS], int npos)
  *
  *  pos (char*[MAXPOS]):
  *      positional arguments.
- *  
+ *
  *  npos (int):
  *      number of positional arguments.
  * */
@@ -549,7 +550,7 @@ command_open(char* id, char* pos[MAXPOS], int npos)
  *
  *  pos (char*[MAXPOS]):
  *      positional arguments.
- *  
+ *
  *  npos (int):
  *      number of positional arguments.
  * */
@@ -570,7 +571,7 @@ command_refer(char* concept_id, char* pos[MAXPOS], int npos)
  *
  *  pos (char*[MAXPOS]):
  *      positional arguments.
- *  
+ *
  *  npos (int):
  *      number of positional arguments.
  * */
@@ -591,7 +592,7 @@ command_quote(char* quote_id, char* pos[MAXPOS], int npos)
  *
  *  pos (char*[MAXPOS]):
  *      positional arguments.
- *  
+ *
  *  npos (int):
  *      number of positional arguments.
  * */
@@ -633,7 +634,7 @@ command_delete(char* id, char* pos[MAXPOS], int npos)
  *
  *  pos (char*[MAXPOS]):
  *      positional arguments.
- *  
+ *
  *  npos (int):
  *      number of positional arguments.
  * */
@@ -681,7 +682,7 @@ command_file(char* id, char* pos[MAXPOS], int npos)
  *
  *  pos (char*[MAXPOS]):
  *      positional arguments.
- *  
+ *
  *  npos (int):
  *      number of positional arguments.
  * */
@@ -826,7 +827,7 @@ command_tag_pick(char* id, char* pos[MAXPOS], int npos)
  *
  *  pos (char*[MAXPOS]):
  *      positional arguments.
- *  
+ *
  *  npos (int):
  *      number of positional arguments.
  * */
@@ -921,7 +922,7 @@ command_update(char* id, char* pos[MAXPOS], int npos)
  *
  *  pos (char*[MAXPOS]):
  *      positional arguments.
- *  
+ *
  *  npos (int):
  *      number of positional arguments.
  * */
@@ -942,7 +943,7 @@ command_cite(char* id, char* pos[MAXPOS], int npos)
  *
  *  pos (char*[MAXPOS]):
  *      positional arguments.
- *  
+ *
  *  npos (int):
  *      number of positional arguments.
  * */
@@ -952,7 +953,8 @@ command_print(char* id, char* pos[MAXPOS], int npos)
   return preview(id);
 }
 
-/* check_command_name -- check that the command is a register command.
+/* check_command_name -- check that the command is a register
+ * command.
  *
  * parameters
  * ----------

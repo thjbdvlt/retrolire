@@ -34,7 +34,6 @@ COMMAND(command_update)
 int
 command_add(char* method, char* identifier);
 
-
 /* check that a string is an available command name. */
 int
 check_command_name(char* s);
