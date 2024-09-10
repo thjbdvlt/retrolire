@@ -54,8 +54,6 @@ int
 command_add_bibtex(char* filepath, int remove_file)
 {
 
-  edit_file(filepath);
-
   // create a temporary file to put the JSON
   char tmp_filepath[] = "/tmp/retrolire.bibtex.XXXXXX";
   if (mkstemp(tmp_filepath) == -1)
@@ -181,15 +179,32 @@ command_add_doi(char* doi)
   // subprocess
   if (pid == 0) {
     execvp(cmd[0], cmd);
-    exit(EXIT_SUCCESS);
   }
 
   else {
-    // wait for the subprocess to end, then call the function that
-    // will put the CSL-JSON in the database (using the python
-    // tool).
-    wait(NULL);
+
+    // wait for the subprocess to check its status
+    int status;
+    if (waitpid(pid, &status, 0) < 0) {
+      perror("wait");
+      exit(254);
+    }
+
+    // check the exit status from the previous command.
+    if (WIFEXITED(status)) {
+      // get the status of the subprocess.
+      int sub_status = WEXITSTATUS(status);
+      if (sub_status == 1) {
+        // if the exit status is 1 (fail), exit the program.
+        fputs("error: cancelled.\n", stderr);
+        exit(EXIT_FAILURE);
+      }
+    }
+
+    // format the bibtex file.
     format_bibtex(tmp_filepath);
+
+    // add the bibtex to the database.
     command_add_bibtex(tmp_filepath, 1);
   }
 
@@ -265,6 +280,9 @@ format_bibtex(char* filepath)
 
   // remove temporary file
   remove(tmp_filepath);
+
+  // edit the formatted filepath
+  edit_file(filepath);
 
   return 1;
 }

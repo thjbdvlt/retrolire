@@ -184,7 +184,6 @@ edit_value(char* id, char* stmtselect, char* stmtupdate, char* ext)
   return code;
 }
 
-
 int
 edit_file(char* filepath)
 {
