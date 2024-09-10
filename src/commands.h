@@ -30,6 +30,11 @@ COMMAND(command_update)
 #undef COMMAND
   ;
 
+/* command_add (for entries importing) is a bit different. */
+int
+command_add(char* method, char* identifier);
+
+
 /* check that a string is an available command name. */
 int
 check_command_name(char* s);
@@ -47,10 +52,6 @@ queryp2(struct Stmt* slct,
   struct ShCmd* sh,
   char* dest,
   int pick);
-
-/* import entry, using 'prototype'. */
-int
-import(char* method, char* identifier);
 
 /* cite quote. */
 int

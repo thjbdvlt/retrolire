@@ -157,7 +157,9 @@ split_v(struct FieldValue* fv, char* s)
         break;
     }
   }
-  fputs("failed to parse -v arg (no '=' sign?).\n", stderr);
+  fprintf(stderr,
+    "failed to parse -v arg (no %c sign?).\n",
+    KEY_VALUE_DELIMITER);
   return 0;
 #undef MSGERROR
 }

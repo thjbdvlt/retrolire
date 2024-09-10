@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wait.h>
+
+#include "add_entries.h"
 
 #include "commands.h"
 #include "edit.h"
@@ -115,64 +118,16 @@ queryp2(struct Stmt* slct,
  *      the identifier (DOI, ISBN) or file path (JSON, bibtex)
  * */
 int
-import(char* method, char* identifier)
+command_add(char* method, char* identifier)
 {
-#define CMD "protolire "
-#define LONGEST_METHOD "template "
-  /* a variable to write the command (i will append some things in
-   * it) */
-  char cmd[sizeof(CMD LONGEST_METHOD) + 1] = CMD;
-  char* x = &cmd[+sizeof(CMD) - 1];
-  int ok = 0;
-  /* parameter 'identifier' is required. and parameter 'method' too.
-   */
-  if (method == NULL) {
-    printf("no value for METHOD.\n");
-    return 0;
-  } else if (identifier == NULL) {
-    printf("no value for IDENTIFIER.\n");
-    return 0;
-  }
 
-  /* there are a few available 'methods'. i iterate over them until
-   * i find the one that match the parameter 'method'. once i find
-   * one, i turn the variable 'ok' so i can check if any has
-   * matched. */
-  const char available_methods[6][VAL_SIZE] = {
-    "doi", "isbn", "bibtex", "json", "template", { 0 }
-  };
-  for (int i = 0; i < 5; i++) {
-    /* match beginning of register methods.*/
-    if (strstarts(available_methods[i], method) != 0 && ok == 0) {
-      ok = 1;
-      char* p = memccpy(
-        x, available_methods[i], '\0', sizeof(LONGEST_METHOD) + 1);
-      if (!p) {
-        fputs("failed copying data.\n", stderr);
-        return 0;
-      }
-      break;
-    };
-  }
-  /* if no method name matched. exit function and return 0.*/
-  if (ok == 0) {
-    fputs("incorrect value for METHOD.\n", stderr);
-    return 0;
-  }
-  /* else, open popen and pipe to it the 'identifier'. as 'method'
-   * is not read from user input (only compared with user input),
-   * the cmd is safe. and the argument 'identifier' is passed as
-   * STDOUT so it must be safe too, and i don't have to escape it.*/
-  FILE* f = popen(cmd, "w");
-  if (!f) {
-    fputs("fail opening a pipe.\n", stderr);
-    return 0;
-  }
-  fputs(identifier, f);
-  pclose(f);
-  return 1;
-#undef CMD
-#undef LONGEST_METHOD
+    if (strstarts("bibtex", method)){
+        command_add_bibtex(identifier);
+    } else {
+        puts("no bibtex");
+    }
+
+    return 1;
 }
 
 /* list -- list entries that matches filters criterias.

@@ -7,8 +7,8 @@ from psycopg.sql import SQL, Identifier
 
 
 usage = """
-    %(prog)s csljson -d DBNAME -t TABLE [--temp TEMP] [-r COLUMN]
-    cat file.json | %(prog)s - -d DBNAME -t TABLE [--temp TEMP] [-r COLUMN]
+    %(prog)s csljson conninfo -t TABLE [--temp TEMP] [-r COLUMN]
+    cat file.json | %(prog)s - conninfo -t TABLE [--temp TEMP] [-r COLUMN]
 """
 desc = (
     "makes a postgresql table from a bibliography in csl-json format."
@@ -17,7 +17,7 @@ epilog = "(every entry in the csl-json becomes a row in the table)"
 help_csljson = (
     "the bibliography in a csl-json file (or from stdin, using -)."
 )
-help_dbname = "a postgresql database name."
+help_conninfo = "postgresql connection info string (dbname=DBNAME ...)"
 help_table = "a table name (the table must exists and have a column id (datatype text).)"
 help_temp = "a temp table name (only used during the process)."
 
@@ -25,13 +25,12 @@ parser = argparse.ArgumentParser(usage=usage, description=desc)
 parser.add_argument(
     "csljson", type=argparse.FileType("r"), help=help_csljson
 )
-parser.add_argument(
-    "-d", "--dbname", type=str, help=help_dbname, required=True
-)
+parser.add_argument("conninfo", type=str, help=help_conninfo)
 parser.add_argument(
     "-t", "--table", type=str, help=help_table, required=True
 )
 parser.add_argument(
+    "-T",
     "--temp",
     type=str,
     help=help_temp,
@@ -67,8 +66,7 @@ def main():
     args = parser.parse_args()
 
     # connect to the database
-    dbname = args.dbname
-    conn = psycopg.connect(dbname=dbname)
+    conn = psycopg.connect(args.conninfo)
     cur = conn.cursor()
 
     # table and temp table

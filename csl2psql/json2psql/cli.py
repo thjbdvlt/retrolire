@@ -6,8 +6,8 @@ import argparse
 desc = """makes a postgresql table from a json array of objects."""
 epilog = "(every object in the array becomes a row in the table)"
 usage = """
-    %(prog)s INFILE -d DBNAME -t TABLE [--temp TEMP] [-r COLUMN]
-    cat array.json | %(prog)s - -d DBNAME -t TABLE [--temp TEMP] [-r COLUMN]
+    %(prog)s INFILE CONNINFO -t TABLE [--temp TEMP] [-r COLUMN]
+    cat array.json | %(prog)s - CONNINFO -t TABLE [--temp TEMP] [-r COLUMN]
 """
 
 parser = argparse.ArgumentParser(
@@ -19,8 +19,7 @@ parser.add_argument(
     help="a json file.",
 )
 parser.add_argument(
-    "-d",
-    "--dbname",
+    "conninfo",
     type=str,
     required=True,
     help="a postgresql database name.",
@@ -41,6 +40,7 @@ parser.add_argument(
     help="a column name to be returned ('... returning id').",
 )
 parser.add_argument(
+    "-T",
     "--temp",
     type=str,
     default=None,
@@ -59,8 +59,7 @@ def main():
     s = args.infile.read()
     array = orjson.loads(s)
 
-    # dbname, table name, temp table name
-    dbname = args.dbname
+    # connection info string, table name, temp table name
     table = args.table
     temp = args.temp
 
@@ -69,7 +68,7 @@ def main():
         temp = f"__{table}"
 
     # connect to database
-    conn = psycopg.connect(dbname=dbname)
+    conn = psycopg.connect(args.conninfo)
 
     # copy the objects as rows to the table
     r = obj2row.array2table(array, conn, table, temp, args.returning)

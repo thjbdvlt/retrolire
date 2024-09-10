@@ -20,22 +20,24 @@ $(bin): config.h bin
 	$(CC) src/*.c -o $(bin) $(CCFLAGS)
 
 install: ./bin/retrolire
-	# create the directory for the binary if it does not exists
+	@# create the directory for the binary if it does not exists
 	mkdir -p $(BINDIR)
-	# copy the binary (retrolire) and the bash script (protolire)
+	@# copy the binary (retrolire) and the bash script (protolire)
 	sudo cp $(bin) $(BINDIR)
 	sudo cp ./bash/protolire $(BINDIR)
-	# create the directory for the data (mainly schema.sql)
+	@# create the directory for the data (mainly schema.sql)
 	mkdir -p $(DATADIR)
-	# copy data
+	@# copy data
 	cp ./bash/completion.bash ./schema.sql -r templates $(DATADIR)/
-	# install python command line programs
-	pipx install .
 
 uninstall:
-	# remove the binary and the bash script
+	@# remove the binary and the bash script
 	sudo rm -rf $(BINDIR)/retrolire $(BINDIR)/protolire $(DATADIR)
-	# uninstall python command line programs
+
+install-pipx:
+	pipx install .
+
+uninstall-pipx:
 	pipx uninstall retrolire
 
 bin:

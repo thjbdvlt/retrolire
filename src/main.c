@@ -416,7 +416,7 @@ main(int argc, char** argv)
        * 'protolire', which get the metadata from doi/isbn or let
        * the user edit a template, or read bibliography from file
        * and put that bibliography into the database */
-      if (!import(pos[0], pos[1]))
+      if (!command_add(pos[0], pos[1]))
         exit(EXIT_FAILURE);
       else
         exit(EXIT_SUCCESS);
