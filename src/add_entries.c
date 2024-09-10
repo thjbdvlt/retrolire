@@ -58,6 +58,8 @@ command_add_bibtex(char* filepath, int remove_file)
   if (mkstemp(tmp_filepath) == -1)
     return 0;
 
+  format_bibtex(filepath);
+
   // the pandoc command to convert the bibtex into a csl-json
   char* bibtex2json[] = { "pandoc",
     "-i",
@@ -70,6 +72,7 @@ command_add_bibtex(char* filepath, int remove_file)
     "csljson",
     NULL };
 
+  // fork
   pid_t pid = fork();
 
   // error if fork fails
@@ -192,7 +195,7 @@ command_add_doi(char* doi)
 }
 
 int
-format_bibtex(char* f_in)
+format_bibtex(char* filepath)
 {
 
   // create a temporary file
@@ -205,7 +208,7 @@ format_bibtex(char* f_in)
   // the pandoc command to convert the bibtex into a csl-json
   char* pandoc[] = { "pandoc",
     "-i",
-    f_in,
+    filepath,
     "-o",
     f_out,
     "-f",
@@ -241,7 +244,7 @@ format_bibtex(char* f_in)
   }
 
   // open file to write. it's the input of pandoc.
-  FILE* file_in = fopen(f_in, "w");
+  FILE* file_in = fopen(filepath, "w");
   if (!file_in) {
     fputs("error opening file.\n", stderr);
     return 0;
@@ -249,7 +252,7 @@ format_bibtex(char* f_in)
 
   // copy, character by character, the content of the formatted file
   // to the original file.
-  char c;
+  int c;
   while ((c = getc(file_in)) != EOF) {
     putc(c, file_out);
   }
