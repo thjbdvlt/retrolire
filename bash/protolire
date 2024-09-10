@@ -2,20 +2,37 @@
 
 set -e -o pipefail
 
+# default values
+isbn_sources="bnf openl wiki goob"
+method="$1"
+identifier="$2"
+dbname=
+
+# data directory, used for templates
 data_dir=/usr/share/retrolire/
 
-dbname="dbname=retrolire"
-isbn_sources="bnf openl wiki goob"
-method=
-identifier=
+# parse options:
+#   -d dbname
+#   -i isbn_sources
+while getopts "d:i:" flag; do
+    case "$flag" in
+        d) dbname="$OPTARG" ;;
+        i) isbn_sources="$OPTARG" ;;
+        *) exit 1 ;;
+    esac
+done
 
+# print help message (on error)
 _help() {
     [ "$1" ] && echo -e "${1}\n" >/dev/tty
     exit 1
 }
 
+# check required parameters
+[ "$dbname" ] || _help "missing option: -d DBNAME"
+
 copy_to() {
-    csl2psql - -d "$RETROLIRE_DBNAME" -t entry --temp _entry
+    csl2psql - -d "$dbname" -t entry --temp _entry
 }
 
 from_doi() {
@@ -130,4 +147,4 @@ then _help ""
 fi
 
 # main command
-import_ref "${@}"
+import_ref "$method" "$identifier"
