@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <wait.h>
 
@@ -186,6 +187,123 @@ command_add_doi(char* doi)
     wait(NULL);
     command_add_bibtex(tmp_filepath, 1);
   }
+
+  return 1;
+}
+
+int
+format_bibtex(char* f_in)
+{
+
+  // create a temporary file
+  char f_out[] = "/tmp/retrolire.XXXXXX.bib";
+  if (mkstemps(f_out, 4) == -1) {
+    fputs("error creating temporary file.\n", stderr);
+    return 0;
+  }
+
+  // the pandoc command to convert the bibtex into a csl-json
+  char* pandoc[] = { "pandoc",
+    "-i",
+    f_in,
+    "-o",
+    f_out,
+    "-f",
+    "bibtex",
+    "-t",
+    "bibtex",
+    NULL };
+
+  // fork
+  pid_t pid = fork();
+  if (pid == -1) {
+    // error forking
+    perror("fork");
+    return 0;
+  }
+
+  // subprocess
+  if (pid == 0) {
+    execvp(pandoc[0], pandoc);
+  }
+
+  // main process
+  else {
+    // here: copy the content of the first file to the second.
+    wait(NULL);
+  }
+
+  // open file to read. it's the output of pandoc.
+  FILE* file_out = fopen(f_out, "r");
+  if (!file_out) {
+    fputs("error opening file.\n", stderr);
+    return 0;
+  }
+
+  // open file to write. it's the input of pandoc.
+  FILE* file_in = fopen(f_in, "w");
+  if (!file_in) {
+    fputs("error opening file.\n", stderr);
+    return 0;
+  }
+
+  // copy, character by character, the content of the formatted file
+  // to the original file.
+  char c;
+  while ((c = getc(file_in)) != EOF) {
+    putc(c, file_out);
+  }
+
+  // close files.
+  fclose(file_in);
+  fclose(file_out);
+  remove(f_out);
+
+  return 1;
+}
+
+int
+edit_bibtex(char* f_in)
+{
+
+  // create a temporary file
+  char f_out[] = "/tmp/retrolire.XXXXXX.bib";
+  if (mkstemps(f_out, 4) == -1) {
+    fputs("error creating temporary file.\n", stderr);
+    return 0;
+  }
+
+  // compute size needed to allocate memory to the command
+  size_t len_editor = strlen(editor);
+  size_t len_f_out = strlen(f_out);
+
+  // allocate memory for the command.
+  // char* edit_cmd = malloc(sizeof(char) * len_editor + len_f_out +
+  // 2);
+  char* edit_cmd = malloc(len_editor + len_f_out + 2);
+
+  if (!edit_cmd) {
+    fputs("error allocating memory.\n", stderr);
+    return 0;
+  }
+
+  sprintf(edit_cmd, "%s %s", editor, f_out);
+
+  puts(edit_cmd);
+
+  // the pandoc command to convert the bibtex into a csl-json
+  char* pandoc[] = { "pandoc",
+    "-i",
+    f_in,
+    "-o",
+    f_out,
+    "-f",
+    "bibtex",
+    "-t",
+    "bibtex",
+    NULL };
+
+  free(edit_cmd);
 
   return 1;
 }
