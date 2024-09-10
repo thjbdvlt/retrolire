@@ -4,9 +4,9 @@ set -e -o pipefail
 
 # default values
 isbn_sources="bnf openl wiki goob"
-method="$1"
-identifier="$2"
 dbname=
+method=
+identifier=
 
 # data directory, used for templates
 data_dir=/usr/share/retrolire/
@@ -14,11 +14,13 @@ data_dir=/usr/share/retrolire/
 # parse options:
 #   -d dbname
 #   -i isbn_sources
-while getopts "d:i:" flag; do
+while getopts "d:i:m:s:" flag; do
     case "$flag" in
         d) dbname="$OPTARG" ;;
-        i) isbn_sources="$OPTARG" ;;
-        *) exit 1 ;;
+        s) isbn_sources="$OPTARG" ;;
+        i) identifier="$OPTARG" ;;
+        m) method="$OPTARG" ;;
+        *) exit 1;;
     esac
 done
 
@@ -30,6 +32,8 @@ _help() {
 
 # check required parameters
 [ "$dbname" ] || _help "missing option: -d DBNAME"
+[ "$method" ] || _help "missing parameter: method"
+[ "$identifier" ] || _help "missing parameter: identifier/file"
 
 copy_to() {
     csl2psql - -d "$dbname" -t entry --temp _entry
@@ -113,8 +117,8 @@ import_ref() {
 
     # check that the word passed as first argument is a valid method.
     case "$1" in
-        d*) check_name doi; getter=get_doi; fetch=true;;
-        i*) check_name isbn; getter=get_isbn; fetch=true;;
+        d*) check_name doi; getter=from_doi; fetch=true;;
+        i*) check_name isbn; getter=from_isbn; fetch=true;;
         t*) check_name template; getter=edit_template; fetch=true;;
         b*) check_name bibtex; getter=from_file;;
         j*) check_name json; getter=from_file;;
