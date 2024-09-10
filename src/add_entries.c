@@ -199,8 +199,8 @@ format_bibtex(char* filepath)
 {
 
   // create a temporary file
-  char f_out[] = "/tmp/retrolire.XXXXXX.bib";
-  if (mkstemps(f_out, 4) == -1) {
+  char tmp_filepath[] = "/tmp/retrolire.XXXXXX.bib";
+  if (mkstemps(tmp_filepath, 4) == -1) {
     fputs("error creating temporary file.\n", stderr);
     return 0;
   }
@@ -210,7 +210,7 @@ format_bibtex(char* filepath)
     "-i",
     filepath,
     "-o",
-    f_out,
+    tmp_filepath,
     "-f",
     "bibtex",
     "-t",
@@ -237,15 +237,15 @@ format_bibtex(char* filepath)
   }
 
   // open file to read. it's the output of pandoc.
-  FILE* file_out = fopen(f_out, "r");
-  if (!file_out) {
+  FILE* f_tmp = fopen(tmp_filepath, "r");
+  if (!f_tmp) {
     fputs("error opening file.\n", stderr);
     return 0;
   }
 
   // open file to write. it's the input of pandoc.
-  FILE* file_in = fopen(filepath, "w");
-  if (!file_in) {
+  FILE* f = fopen(filepath, "w");
+  if (!f) {
     fputs("error opening file.\n", stderr);
     return 0;
   }
@@ -253,14 +253,16 @@ format_bibtex(char* filepath)
   // copy, character by character, the content of the formatted file
   // to the original file.
   int c;
-  while ((c = getc(file_in)) != EOF) {
-    putc(c, file_out);
+  while ((c = getc(f_tmp)) != EOF) {
+    putc(c, f);
   }
 
   // close files.
-  fclose(file_in);
-  fclose(file_out);
-  remove(f_out);
+  fclose(f);
+  fclose(f_tmp);
+
+  // remove temporary file
+  remove(tmp_filepath);
 
   return 1;
 }
