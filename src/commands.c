@@ -10,10 +10,7 @@
 #include "underscore.h"
 #include "util.h"
 
-/* queryp2
- * =======
- *
- * concatenate SELECT + conditional clauses, then send and popen2.
+/* queryp2 -- concatenate statement, pipe out and get result.
  *
  * parameters
  * ----------
@@ -100,8 +97,7 @@ queryp2(struct Stmt* slct,
   return 1;
 }
 
-/* import
- * ======
+/* import -- import entries from doi/isbn/json/bibtex.
  *
  * import entries from csl-json, bibtex, doi, isbn or edit a
  * template. that function use a shell script 'protolire', because
@@ -179,10 +175,7 @@ import(char* method, char* identifier)
 #undef LONGEST_METHOD
 }
 
-/* list
- * ====
- *
- * list entries that matches filters criterias.
+/* list -- list entries that matches filters criterias.
  *
  * parameters
  * ----------
@@ -294,10 +287,7 @@ list(struct Stmt* cnd,
 #undef CMD
 }
 
-/* json
- * ====
- *
- * list entries that matches filters criterias in JSON format.
+/* json -- list entries in JSON entries.
  *
  * parameters
  * ----------
@@ -344,10 +334,7 @@ json(struct Stmt* cnd, int npar, const char* params[MAXOPT])
   return 1;
 }
 
-/* make_stmt_quote
- * ===============
- *
- * make the SQL for quotes.
+/* make_stmt_quote -- make the SQL for quotes.
  *
  * parameters
  * ----------
@@ -384,10 +371,7 @@ make_stmt_quote(struct Stmt* slct, struct ShCmd* sh)
 #undef STMT_QUOTE
 }
 
-/* make_stmt_refer
- * ===============
- *
- * make the SQL for refer (concept).
+/* make_stmt_refer - make the SQL for refer (concept).
  *
  * parameters
  * ----------
@@ -424,10 +408,7 @@ make_stmt_refer(struct Stmt* slct, struct ShCmd* sh)
 #undef STMT_CONCEPT
 }
 
-/* make_stmt_open
- * ===============
- *
- * add a conditional clause for the 'open' command.
+/* make_stmt_open -- add a conditional clause for the 'open' command.
  *
  * parameters
  * ----------
@@ -453,6 +434,20 @@ make_stmt_open(struct Stmt* cnd, int npar)
   return 1;
 }
 
+/* command_tag_edit -- edit tag in editor.
+ *
+ * parameters
+ * ----------
+ *
+ *  id (char*):
+ *      the entry id.
+ *
+ *  pos (char*[MAXPOS]):
+ *      positional arguments.
+ *  
+ *  npos (int):
+ *      number of positional arguments.
+ * */
 int
 command_tag_edit(char* id, char* pos[MAXPOS], int npos)
 {
@@ -470,6 +465,20 @@ command_tag_edit(char* id, char* pos[MAXPOS], int npos)
   return 1;
 }
 
+/* command_edit -- edit reading notes in editor.
+ *
+ * parameters
+ * ----------
+ *
+ *  id (char*):
+ *      the entry id.
+ *
+ *  pos (char*[MAXPOS]):
+ *      positional arguments.
+ *  
+ *  npos (int):
+ *      number of positional arguments.
+ * */
 int
 command_edit(char* id, char* pos[MAXPOS], int npos)
 {
@@ -481,8 +490,20 @@ command_edit(char* id, char* pos[MAXPOS], int npos)
     ext);
 }
 
-/* select a file with fzf and open it using $OPENER or xdg-open.
- * there's only one parameter, it's the ID. */
+/* command_open -- open an URL/file attached to an entry.
+ *
+ * parameters
+ * ----------
+ *
+ *  id (char*):
+ *      the entry id.
+ *
+ *  pos (char*[MAXPOS]):
+ *      positional arguments.
+ *  
+ *  npos (int):
+ *      number of positional arguments.
+ * */
 int
 command_open(char* id, char* pos[MAXPOS], int npos)
 {
@@ -544,6 +565,20 @@ command_open(char* id, char* pos[MAXPOS], int npos)
   return 1;
 }
 
+/* command_refer -- quote a concept with its reference.
+ *
+ * parameters
+ * ----------
+ *
+ *  id (char*):
+ *      the entry id.
+ *
+ *  pos (char*[MAXPOS]):
+ *      positional arguments.
+ *  
+ *  npos (int):
+ *      number of positional arguments.
+ * */
 int
 command_refer(char* concept_id, char* pos[MAXPOS], int npos)
 {
@@ -551,6 +586,20 @@ command_refer(char* concept_id, char* pos[MAXPOS], int npos)
     concept_id, "select cite_concept($1::int)");
 }
 
+/* command_quote -- get a quote formatted for pandoc.
+ *
+ * parameters
+ * ----------
+ *
+ *  id (char*):
+ *      the entry id.
+ *
+ *  pos (char*[MAXPOS]):
+ *      positional arguments.
+ *  
+ *  npos (int):
+ *      number of positional arguments.
+ * */
 int
 command_quote(char* quote_id, char* pos[MAXPOS], int npos)
 {
@@ -558,7 +607,20 @@ command_quote(char* quote_id, char* pos[MAXPOS], int npos)
     quote_id, "select quote_to_string_from_id($1::int)");
 }
 
-/* delete an entry specified as parameter (ID). */
+/* command_delete -- delete an entry.
+ *
+ * parameters
+ * ----------
+ *
+ *  id (char*):
+ *      the entry id.
+ *
+ *  pos (char*[MAXPOS]):
+ *      positional arguments.
+ *  
+ *  npos (int):
+ *      number of positional arguments.
+ * */
 int
 command_delete(char* id, char* pos[MAXPOS], int npos)
 {
@@ -587,6 +649,20 @@ command_delete(char* id, char* pos[MAXPOS], int npos)
   return code;
 }
 
+/* command_file -- attach a file to an entry.
+ *
+ * parameters
+ * ----------
+ *
+ *  id (char*):
+ *      the entry id.
+ *
+ *  pos (char*[MAXPOS]):
+ *      positional arguments.
+ *  
+ *  npos (int):
+ *      number of positional arguments.
+ * */
 int
 command_file(char* id, char* pos[MAXPOS], int npos)
 {
@@ -621,6 +697,20 @@ command_file(char* id, char* pos[MAXPOS], int npos)
   return code;
 }
 
+/* command_tag_pick -- add tags to an entry using fzf.
+ *
+ * parameters
+ * ----------
+ *
+ *  id (char*):
+ *      the entry id.
+ *
+ *  pos (char*[MAXPOS]):
+ *      positional arguments.
+ *  
+ *  npos (int):
+ *      number of positional arguments.
+ * */
 int
 command_tag_pick(char* id, char* pos[MAXPOS], int npos)
 {
@@ -752,6 +842,20 @@ command_tag_pick(char* id, char* pos[MAXPOS], int npos)
   return code;
 }
 
+/* command_update -- update a field of an entry.
+ *
+ * parameters
+ * ----------
+ *
+ *  id (char*):
+ *      the entry id.
+ *
+ *  pos (char*[MAXPOS]):
+ *      positional arguments.
+ *  
+ *  npos (int):
+ *      number of positional arguments.
+ * */
 int
 command_update(char* id, char* pos[MAXPOS], int npos)
 {
@@ -833,6 +937,20 @@ command_update(char* id, char* pos[MAXPOS], int npos)
   return edit_value(id, slct_s, slct_up_s, ext);
 }
 
+/* command_cite -- cite an entry (get its ID).
+ *
+ * parameters
+ * ----------
+ *
+ *  id (char*):
+ *      the entry id.
+ *
+ *  pos (char*[MAXPOS]):
+ *      positional arguments.
+ *  
+ *  npos (int):
+ *      number of positional arguments.
+ * */
 int
 command_cite(char* id, char* pos[MAXPOS], int npos)
 {
@@ -840,13 +958,34 @@ command_cite(char* id, char* pos[MAXPOS], int npos)
   return 1;
 }
 
+/* command_print -- print informations about an entry.
+ *
+ * parameters
+ * ----------
+ *
+ *  id (char*):
+ *      the entry id.
+ *
+ *  pos (char*[MAXPOS]):
+ *      positional arguments.
+ *  
+ *  npos (int):
+ *      number of positional arguments.
+ * */
 int
 command_print(char* id, char* pos[MAXPOS], int npos)
 {
   return preview(id);
 }
 
-/* check that the command is a register command. */
+/* check_command_name -- check that the command is a register command.
+ *
+ * parameters
+ * ----------
+ *
+ * cmd (char*):
+ *      check that a string is a registered commnand.
+ * */
 int
 check_command_name(char* cmd)
 {

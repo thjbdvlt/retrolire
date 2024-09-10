@@ -46,8 +46,7 @@ config.h:
 	# generate the config file from config.def.h
 	cp config.def.h config.h
 
-.PHONY: clean
-.PHONY: run
+.PHONY: clean run
 
 run:
 	./bin/retrolire

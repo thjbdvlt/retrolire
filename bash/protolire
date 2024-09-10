@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e -o pipefail
 dbname="${RETROLIRE_DBNAME:=retrolire}"
 data_dir=/usr/share/retrolire/
@@ -96,4 +97,4 @@ then
     _help ""
 fi
 
-import_ref "${@}" "$(cat /dev/stdin)"
+import_ref "${@}"
