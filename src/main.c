@@ -31,14 +31,15 @@
    -i --id ID
  */
 
-#include "commands.h"
-#include "sizes.h"
-#include "underscore.h"
-#include "util.h"
 #include <argp.h>
 #include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "commands.h"
+#include "sizes.h"
+#include "underscore.h"
+#include "util.h"
 
 const char* argp_program_version = "0.1.0";
 static char args_doc[] = "COMMAND [...]";

@@ -1,56 +1,74 @@
 #!/bin/bash
 
 set -e -o pipefail
-dbname="${RETROLIRE_DBNAME:=retrolire}"
-data_dir=/usr/share/retrolire/
-isbn=
 
-help="retrolire add {doi|isbn|template|json|bibtex} {FILEPATH|DOI|ISBN} [--tag TAGS] [--isbn-sources SOURCES]"
+data_dir=/usr/share/retrolire/
+
+dbname="dbname=retrolire"
+isbn_sources="bnf openl wiki goob"
+method=
+identifier=
 
 _help() {
-    echo -e "usage:\n      $help\n" >/dev/tty
-    [ "$1" ] && echo -e "$1\n" >/dev/tty
+    [ "$1" ] && echo -e "${1}\n" >/dev/tty
     exit 1
 }
 
 copy_to() {
-    csl2psql - -d "$dbname" -t entry --temp _entry
+    csl2psql - -d "$RETROLIRE_DBNAME" -t entry --temp _entry
 }
 
-get_doi() {
+from_doi() {
     local result
-    [ "$1" ] || _help "needs a value (doi): cancelled."
-    result="$(isbn_doi2tex "$1")" ||
-        _help "couldn't find a reference for doi $1: cancelled"
+
+    # get the reference from the DOI. if no reference is found, exit.
+    result="$(isbn_doi2tex "$1")" || _help "no reference for doi $1"
+
+    # isbn_doi2tex returns no error even when nothing is found. 
+    # so, it's needed to check that the result is not the help message.
     echo "$result" | head -n 1 | grep -i '^usage' \
-        && _help "couldn't find a reference for doi $1: cancelled"
+        && _help "no reference for doi $1"
+
+    # echo the result
     echo "$result"
 }
 
-get_isbn() {
+from_isbn() {
     local ref
-    [ "$1" ] || _help "needs a value (isbn): cancelled."
-    isbn="${isbn:=bnf openl wiki loc goob}"
-    for i in $isbn
+
+    # try with all services to get a reference
+    for i in $isbn_sources
     do
+        # print the current provider name during the process
         echo "trying with source '$i'" >/dev/tty
-        ref="$(isbn_meta "$1" "$i" bibtex 2>/dev/null |
-            grep -E -v '^\s*$' )" && break
+
+        # get the reference metadata
+        ref="$(
+            isbn_meta "$1" "$i" bibtex 2>/dev/null |
+            grep -E -v '^\s*$'
+        )" && break
     done
+
     [ "$ref" ] || _help "couldn't find a reference for isbn $1."
+
     echo "$ref"
 }
 
 edit_template() {
     local f d empty ref
+
     d="${data_dir}/templates"
     f="${d}/${1}.bib"
+
     [ -f "$f" ] || f="$(find "$d" -type f | fzf -d / --nth -1 --with-nth -1)"
     [ -f "$f" ] || _help "no file picked: cancelled."
+
     empty="$(cat "$f")"
     ref="$(echo "$empty" | vipe)"
+
     [ "$ref" ] || _help "empty: cancelled"
     [ "$ref" != "$empty" ]|| _help "unchanged: cancelled."
+
     echo "$ref"
 }
 
@@ -63,38 +81,53 @@ from_file() {
     esac
 }
 
+# main command: import entries
 import_ref() {
     local ref getter fetch
+
     fetch=
+    id="$1"
+
+    check_name(){
+        # function that check if the first argument is the beginning
+        # of an available method.
+        [[ "$1" =~ ^$id ]] || _help "not a valid argument: $id"
+    }
+
+    # check that the word passed as first argument is a valid method.
     case "$1" in
-        d*) [[ 'doi' =~ ^$1 ]] || _help "not a valid argument: $1"
-            getter=get_doi; fetch=true;;
-        i*) [[ 'isbn' =~ ^$1 ]] || _help "not a valid argument: $1"
-            getter=get_isbn; fetch=true;;
-        t*) [[ 'template' =~ ^$1 ]] || _help "not a valid argument: $1"
-            getter=edit_template; fetch=true;;
-        b*) [[ 'bibtex' =~ ^$1 ]] || _help "not a valid argument: $1"
-            getter=from_file;;
-        j*) [[ 'json' =~ ^$1 ]] || _help "not a valid argument: $1"
-            getter=from_file;;
+        d*) check_name doi; getter=get_doi; fetch=true;;
+        i*) check_name isbn; getter=get_isbn; fetch=true;;
+        t*) check_name template; getter=edit_template; fetch=true;;
+        b*) check_name bibtex; getter=from_file;;
+        j*) check_name json; getter=from_file;;
         *) _help;;
     esac
+
+    unset check_name
+
+    # get entry from doi/isbn
     if [ "$fetch" ]
     then {
         ref="$($getter "$2")"
-        csl=$(echo "$ref" | pandoc -f bibtex -t bibtex | vipe | pandoc -f bibtex -t csljson) ||
-            _help "parsing error: cancelled."
+        csl=$(
+            echo "$ref" |
+                pandoc -f bibtex -t bibtex |
+                vipe |
+                pandoc -f bibtex -t csljson
+        ) || _help "parsing error: cancelled."
         echo "$csl" | copy_to
     }
-    else {
-        from_file "${@}"
-    }
+
+    # get entries from file (json/bibtex)
+    else from_file "${@}"
     fi
 }
 
+# print help
 if [ "$1" == "-h" ]
-then
-    _help ""
+then _help ""
 fi
 
+# main command
 import_ref "${@}"
