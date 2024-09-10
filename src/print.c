@@ -1,11 +1,12 @@
-#include "print.h"
-#include "sizes.h"
-#include "util.h"
 #include <ctype.h>
 #include <postgresql/libpq-fe.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "print.h"
+#include "sizes.h"
+#include "util.h"
 
 // print the result of a query, row by row (expanded mode wrapped).
 int

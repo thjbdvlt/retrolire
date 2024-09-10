@@ -9,9 +9,10 @@
 #ifndef _PRINT_H
 #define _PRINT_H
 
+#include <postgresql/libpq-fe.h>
+
 #include "pgpopen2.h"
 #include "stmt.h"
-#include <postgresql/libpq-fe.h>
 
 /* print a PGresult to FILE. */
 int

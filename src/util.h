@@ -8,9 +8,10 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
+#include <postgresql/libpq-fe.h>
+
 #include "../config.h"
 #include "stmt.h"
-#include <postgresql/libpq-fe.h>
 
 /* get a single value from the database. */
 int

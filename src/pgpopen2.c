@@ -1,7 +1,8 @@
-#include "pgpopen2.h"
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include "pgpopen2.h"
 
 #define READ 0
 #define WRITE 1

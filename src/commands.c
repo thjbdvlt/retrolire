@@ -122,7 +122,7 @@ command_add(char* method, char* identifier)
 {
 
   if (strstarts("doi", method)) {
-    // TODO
+    command_add_doi(identifier);
   }
 
   else if (strstarts("isbn", method)) {
@@ -142,8 +142,10 @@ command_add(char* method, char* identifier)
   }
 
   else {
-    fprintf(
-      stderr, "not an available method for 'add': %s\n", method);
+    fprintf(stderr,
+      "not an available method for 'add': %s.\n"
+      "available methods are: {doi,isbn,json,bibtex,template}.\n",
+      method);
   }
 
   return 1;

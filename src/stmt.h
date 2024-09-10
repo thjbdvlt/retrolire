@@ -15,8 +15,9 @@
 #ifndef _STMT_H
 #define _STMT_H
 
-#include "sizes.h"
 #include <string.h>
+
+#include "sizes.h"
 
 /* the Stmt struct is used to concatenate strings.*/
 struct Stmt

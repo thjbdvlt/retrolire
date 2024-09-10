@@ -1,12 +1,13 @@
-#include "underscore.h"
-#include "commands.h"
-#include "print.h"
-#include "sizes.h"
-#include "util.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "commands.h"
+#include "print.h"
+#include "sizes.h"
+#include "underscore.h"
+#include "util.h"
 
 int
 underscore_add(char* pos[VAL_SIZE])

@@ -1,35 +1,4 @@
-/*
- retrolire
-
- command line bibliography management with PostgreSQL and FZF.
-
- usage:
-   retrolire COMMAND [OPTIONS ...]
-
-  COMMANDS
-   edit, cite, list, json, open, update, file, add
-   delete, refer, quote, tag, print
-
-  FILTER OPTIONS
-   -v --var KEY=PATTERN
-   -v --tag TAG
-   -s --search PATTERN
-   -q --quote PATTERN
-   -c --concept PATTERN
-
-  HISTORY
-   -l --last
-   -r --recent
-
-  FZF OPTIONS
-   -e --exact
-   -p --preview
-
-  MISC
-   -o --output
-   -T --showtags
-   -i --id ID
- */
+// retrolire -- command line bibliography management
 
 #include <argp.h>
 #include <getopt.h>

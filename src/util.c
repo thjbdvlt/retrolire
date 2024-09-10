@@ -1,8 +1,9 @@
-#include "util.h"
-#include "string.h"
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+
+#include "string.h"
+#include "util.h"
 
 #define KEY_VALUE_DELIMITER '.'
 

@@ -1,11 +1,12 @@
-#include "edit.h"
-#include "sizes.h"
-#include "util.h"
 #include <postgresql/libpq-fe.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include "edit.h"
+#include "sizes.h"
+#include "util.h"
 
 char*
 edit_in_editor(char* value, char* ext)
