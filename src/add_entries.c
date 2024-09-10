@@ -8,7 +8,7 @@
 #include "add_entries.h"
 
 int
-command_add_json(char* filepath)
+command_add_json(char* filepath, int remove_file)
 {
 
   // the subprocess command
@@ -36,20 +36,25 @@ command_add_json(char* filepath)
     exit(EXIT_SUCCESS);
   }
 
-  // wait for the subprocess to end
-  if (pid == 1){
-      wait(NULL);
+  else {
+    // wait for the subprocess to end
+    wait(NULL);
+
+    // remove the file
+    if (remove_file) {
+      remove(filepath);
+    }
   }
 
   return 1;
 }
 
 int
-command_add_bibtex(char* filepath)
+command_add_bibtex(char* filepath, int remove_file)
 {
   // create a temporary file to put the JSON
   char tmp_filepath[] = "/tmp/retrolire.bibtex.XXXXXX";
-  if (!mkstemp(tmp_filepath))
+  if (mkstemp(tmp_filepath) == -1)
     return 0;
 
   // the pandoc command to convert the bibtex into a csl-json
@@ -80,43 +85,64 @@ command_add_bibtex(char* filepath)
 
   else {
     // wait for the subprocess to end, then call the function that
-    // will put the CSL-JSON in the database (using the python tool).
+    // will put the CSL-JSON in the database (using the python
+    // tool).
     wait(NULL);
-    command_add_json(tmp_filepath);
+    command_add_json(tmp_filepath, 1);
+
+    // remove the file
+    if (remove_file) {
+      remove(filepath);
+    }
   }
 
   return 1;
 }
 
-// arf relou de pas pouvoir écrire vers un fichier
+int
+command_add_isbn(char* isbn)
+{
 
-// int
-// command_add_doi(char* doi)
-// {
-//     char* doi2tex[] = {"isbn_doi2tex", doi};
-//
-//     // fork
-//     pid_t pid = fork();
-//
-//     // error if fork fails
-//     if (pid == -1) {
-//         perror("fork");
-//         return 0;
-//     }
-//
-//     // subprocess
-//     if (pid == 0) {
-//         execvp(doi2tex[0], doi2tex);
-//         exit(EXIT_SUCCESS);
-//     }
-//
-//     else {
-//         // wait for the subprocess to end, then call the function that
-//         // will put the CSL-JSON in the database (using the python tool).
-//         wait(NULL);
-//         command_add_json(doi2tex);
-//     }
-//
-//     return 1;
-//
-// }
+  // create a temporary file
+  char tmp_filepath[] = "/tmp/retrolire.XXXXXX.bib";
+  if (mkstemps(tmp_filepath, 4) == -1) {
+    fputs("error creating temporary file.\n", stderr);
+    return 0;
+  }
+
+  // get the metadata using the ISBN and the list of isbn services
+  // defined in config.h. write the result in the temporary file.
+  char* cmd[] = { "fetchref",
+    "isbn",
+    isbn,
+    "--services",
+    isbn_services,
+    "-o",
+    tmp_filepath,
+    NULL };
+
+  // fork
+  pid_t pid = fork();
+
+  // error if fork fails
+  if (pid == -1) {
+    perror("fork");
+    return 0;
+  }
+
+  // subprocess
+  if (pid == 0) {
+    execvp(cmd[0], cmd);
+    exit(EXIT_SUCCESS);
+  }
+
+  else {
+    // wait for the subprocess to end, then call the function that
+    // will put the CSL-JSON in the database (using the python
+    // tool).
+    wait(NULL);
+    command_add_bibtex(tmp_filepath, 1);
+  }
+
+  return 1;
+}

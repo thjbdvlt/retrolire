@@ -14,3 +14,5 @@ static const char connectioninfo[] = "dbname=retrolire";
 
 // preview window position (fzf).
 static char preview_pos[] = "right,45%";
+
+static char isbn_services[] = "openl wiki goob";

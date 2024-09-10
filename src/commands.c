@@ -126,15 +126,15 @@ command_add(char* method, char* identifier)
     }
 
     else if (strstarts("isbn", method)){
-        // TODO
+        command_add_isbn(identifier);
     }
 
     else if (strstarts("bibtex", method)){
-        command_add_bibtex(identifier);
+        command_add_bibtex(identifier, 0);
     }
 
     else if (strstarts("json", method)){
-        command_add_json(identifier);
+        command_add_json(identifier, 0);
     }
 
     else if (strstarts("template", method)){

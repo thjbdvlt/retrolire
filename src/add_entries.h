@@ -1,4 +1,6 @@
 int
-command_add_json(char* filepath);
+command_add_json(char* filepath, int remove_file);
 int
-command_add_bibtex(char* filepath);
+command_add_bibtex(char* filepath, int remove_file);
+int
+command_add_isbn(char* isbn);

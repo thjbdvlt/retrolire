@@ -41,6 +41,7 @@ edit_in_editor(char* value, char* ext)
     return NULL;
   }
   /* make the command. */
+  // TODO: fix this? (sizeof instead of strlen?)
   char cmd[sizeof(FILEPATH) + MAX_EXT_LEN + sizeof(editor) + 4] =
     "";
   if (mkstemps(fname, (int)extlen) == -1) {
