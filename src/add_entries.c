@@ -28,13 +28,15 @@ command_add_json(char* filepath, int remove_file)
   // error if fork fails
   if (pid == -1) {
     perror("fork");
+    if (remove_file) {
+      remove(filepath);
+    }
     return 0;
   }
 
   // subprocess
   if (pid == 0) {
     execvp(csl2psql[0], csl2psql);
-    exit(EXIT_SUCCESS);
   }
 
   else {
@@ -76,6 +78,7 @@ command_add_bibtex(char* filepath, int remove_file)
 
   // error if fork fails
   if (pid == -1) {
+    remove(tmp_filepath);
     perror("fork");
     return 0;
   }
@@ -172,6 +175,7 @@ command_add_doi(char* doi)
 
   // error if fork fails
   if (pid == -1) {
+    remove(tmp_filepath);
     perror("fork");
     return 0;
   }
@@ -186,6 +190,7 @@ command_add_doi(char* doi)
     // wait for the subprocess to check its status
     int status;
     if (waitpid(pid, &status, 0) < 0) {
+      remove(tmp_filepath);
       perror("wait");
       exit(254);
     }
@@ -197,6 +202,7 @@ command_add_doi(char* doi)
       if (sub_status == 1) {
         // if the exit status is 1 (fail), exit the program.
         fputs("error: cancelled.\n", stderr);
+        remove(tmp_filepath);
         exit(EXIT_FAILURE);
       }
     }
@@ -239,6 +245,7 @@ format_bibtex(char* filepath)
   if (pid == -1) {
     // error forking
     perror("fork");
+    remove(tmp_filepath);
     return 0;
   }
 
@@ -256,6 +263,7 @@ format_bibtex(char* filepath)
   // open file to read. it's the output of pandoc.
   FILE* f_tmp = fopen(tmp_filepath, "r");
   if (!f_tmp) {
+    remove(tmp_filepath);
     fputs("error opening file.\n", stderr);
     return 0;
   }
@@ -263,6 +271,7 @@ format_bibtex(char* filepath)
   // open file to write. it's the input of pandoc.
   FILE* f = fopen(filepath, "w");
   if (!f) {
+    remove(tmp_filepath);
     fputs("error opening file.\n", stderr);
     return 0;
   }
