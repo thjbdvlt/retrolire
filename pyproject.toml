@@ -21,6 +21,7 @@ jsonarray2psql = "csl2psql.json2psql.cli:main"
 csljson-update = "csl2psql.cslminitools.cli:main"
 csl2psql = "csl2psql.cli:main"
 pdfannots = "pdfannots.cli:main"
+fetchref = "fetchref.cli:main"
 
 [build-system]
 requires = ["setuptools>=61.0"]

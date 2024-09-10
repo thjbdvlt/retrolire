@@ -121,10 +121,29 @@ int
 command_add(char* method, char* identifier)
 {
 
-    if (strstarts("bibtex", method)){
+    if (strstarts("doi", method)){
+        // TODO
+    }
+
+    else if (strstarts("isbn", method)){
+        // TODO
+    }
+
+    else if (strstarts("bibtex", method)){
         command_add_bibtex(identifier);
-    } else {
-        puts("no bibtex");
+    }
+
+    else if (strstarts("json", method)){
+        command_add_json(identifier);
+    }
+
+    else if (strstarts("template", method)){
+        // TODO
+    }
+
+    else {
+      fprintf(
+        stderr, "not an available method for 'add': %s\n", method);
     }
 
     return 1;
