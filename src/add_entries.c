@@ -53,12 +53,13 @@ command_add_json(char* filepath, int remove_file)
 int
 command_add_bibtex(char* filepath, int remove_file)
 {
+
+  edit_file(filepath);
+
   // create a temporary file to put the JSON
   char tmp_filepath[] = "/tmp/retrolire.bibtex.XXXXXX";
   if (mkstemp(tmp_filepath) == -1)
     return 0;
-
-  format_bibtex(filepath);
 
   // the pandoc command to convert the bibtex into a csl-json
   char* bibtex2json[] = { "pandoc",
@@ -188,6 +189,7 @@ command_add_doi(char* doi)
     // will put the CSL-JSON in the database (using the python
     // tool).
     wait(NULL);
+    format_bibtex(tmp_filepath);
     command_add_bibtex(tmp_filepath, 1);
   }
 
@@ -263,52 +265,6 @@ format_bibtex(char* filepath)
 
   // remove temporary file
   remove(tmp_filepath);
-
-  return 1;
-}
-
-int
-edit_bibtex(char* f_in)
-{
-
-  // create a temporary file
-  char f_out[] = "/tmp/retrolire.XXXXXX.bib";
-  if (mkstemps(f_out, 4) == -1) {
-    fputs("error creating temporary file.\n", stderr);
-    return 0;
-  }
-
-  // compute size needed to allocate memory to the command
-  size_t len_editor = strlen(editor);
-  size_t len_f_out = strlen(f_out);
-
-  // allocate memory for the command.
-  // char* edit_cmd = malloc(sizeof(char) * len_editor + len_f_out +
-  // 2);
-  char* edit_cmd = malloc(len_editor + len_f_out + 2);
-
-  if (!edit_cmd) {
-    fputs("error allocating memory.\n", stderr);
-    return 0;
-  }
-
-  sprintf(edit_cmd, "%s %s", editor, f_out);
-
-  puts(edit_cmd);
-
-  // the pandoc command to convert the bibtex into a csl-json
-  char* pandoc[] = { "pandoc",
-    "-i",
-    f_in,
-    "-o",
-    f_out,
-    "-f",
-    "bibtex",
-    "-t",
-    "bibtex",
-    NULL };
-
-  free(edit_cmd);
 
   return 1;
 }

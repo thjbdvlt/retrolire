@@ -8,3 +8,5 @@ int
 command_add_json(char* filepath, int remove_file);
 int
 format_bibtex(char* filepath);
+int
+edit_file(char* filepath);

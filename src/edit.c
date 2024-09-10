@@ -183,3 +183,55 @@ edit_value(char* id, char* stmtselect, char* stmtupdate, char* ext)
   PQfinish(conn);
   return code;
 }
+
+
+int
+edit_file(char* filepath)
+{
+
+  // fork
+  pid_t pid = fork();
+  if (pid == -1) {
+    // error forking
+    perror("fork");
+    return 0;
+  }
+
+  // subprocess
+  if (pid == 0) {
+
+    // compute size needed to allocate memory to the command
+    size_t len_editor = strlen(editor);
+    size_t len_f_out = strlen(filepath);
+
+    // allocate memory for the command.
+    // +2 because +1 for the 0-terminating and +1 for the spacy
+    // between the command (editor) and the filepath.
+    char* edit_cmd = malloc(len_editor + len_f_out + 2);
+    if (!edit_cmd) {
+      fputs("error allocating memory.\n", stderr);
+      return 0;
+    }
+
+    // make the shell command
+    sprintf(edit_cmd, "%s %s", editor, filepath);
+    char* cmd[] = { "/bin/sh", "-c", edit_cmd, NULL };
+
+    // execute the shell command
+    execvp(cmd[0], cmd);
+
+    // free memory needed by the shell command.
+    free(edit_cmd);
+
+    // end subprocess
+    exit(EXIT_SUCCESS);
+  }
+
+  // main process
+  else {
+    // here: copy the content of the first file to the second.
+    wait(NULL);
+  }
+
+  return 1;
+}

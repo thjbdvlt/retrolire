@@ -16,4 +16,8 @@ edit_in_editor(char* value, char* ext);
 int
 edit_value(char* id, char* stmtselect, char* stmtupdate, char* ext);
 
+/* edit a file */
+int
+edit_file(char* filepath);
+
 #endif

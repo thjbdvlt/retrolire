@@ -12,3 +12,4 @@ venv
 check.sh
 valgrind-output.txt
 .tags
+test.bib
