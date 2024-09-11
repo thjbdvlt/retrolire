@@ -103,6 +103,7 @@ edit_in_editor(char* value, char* ext)
     if (c == EOF) {
       s[index] = '\0';
       fclose(f);
+      remove(fname);
       return s;
     }
     /* if it's not EOF, then append it to the string. if index is
