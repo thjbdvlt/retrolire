@@ -33,6 +33,42 @@ Most commands operate on a single entry (e.g. `edit`, `cite`). Some others show 
 
 ### filters
 
+Filter options define searching criteria. They are added one to another using the logical operator `AND`. Except for `-l`, they can be used multiple times.
+
+```bash
+# Print entries that:
+#   - have tags 'poetry' and 'recording'
+#   - have been published by 'amsterdam' or 'p.o.l' publisher
+retrolire list \
+    --tag 'poetry' --tag 'recording' \
+    --var 'publisher.amsterdam|p\.o\.l'
+```
+
+#### -v --var
+
+Key value filter on [csl variables](https://aurimasv.github.io/z2csl/typeMap.xml). Argument: field.[regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) (e.g. `title.network`).
+
+#### -s --search
+
+Search for a pattern in reading notes. Argument: [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP).
+
+#### -t --tag
+
+Search entry with a tag. 
+
+#### -c --concept
+
+Search for entry with a certain concept defined in reading notes. Argument: [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP).
+
+#### -q --quote
+
+Search for entry with a pattern in quotes. Argument: [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP).
+
+#### -l --last
+
+Select last edited/modified entry.
+
+<!--
 | option | description | argument |
 | ------ | ----------- | -------- |
 | `-v` | key-value filter on [csl variables](https://aurimasv.github.io/z2csl/typeMap.xml) | field.[regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) |
@@ -41,17 +77,8 @@ Most commands operate on a single entry (e.g. `edit`, `cite`). Some others show 
 | `-q` | search a pattern in quotes | [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) |
 | `-c` | search a pattern in concepts | [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) |
 | `-l` | select the last edited entry |
+-->
 
-Filter options define searching criteria. They are added one to another using the logical operator `AND`. Except for `-l`, they can be used multiple times.
-
-```bash
-# Print entries that:
-#   - have tags 'poetry' and 'recording'
-#   - have been published by 'amsterdam' or 'p.o.l' publisher
-retrolire list \
-    -t 'poetry' -t 'recording' \
-    -v 'publisher.amsterdam|p\.o\.l'
-```
 
 ![](./img/quote.gif)
 
