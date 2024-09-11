@@ -5,6 +5,7 @@
 #include <wait.h>
 
 #include "../config.h"
+#include "edit.h"
 
 #include "add_entries.h"
 
