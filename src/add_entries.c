@@ -341,3 +341,49 @@ format_bibtex(char* filepath)
 }
 
 // TODO: add templates
+int
+command_add_template(char* template_name)
+{
+#define FILEPATH "/tmp/retrolire.template.bib"
+
+  // pick a template file matching pattern.
+  FILE* p = popen(
+    // xargs is used so i don't have to concatenate strings.
+    "xargs -0 fdfind |"
+    // fzf is used to pick a file. only the filename is used.
+    " fzf -d/ --with-nth=-1 --nth=-1 -0"
+    // bind enter to copy selected file
+    " --bind='enter:become(cp {} " FILEPATH ")'"
+    // if there is only one file matching pattern, it's
+    // automatically picked.
+    " --bind='one:become(cp {} " FILEPATH ")'",
+    // write mode.
+    "w");
+
+  // exit function if popen failed.
+  if (!p)
+      return 0;
+
+  // put the file name if one is used as parameter. if none, an empty
+  // strings (delimited by single quotes) id passed.
+  if (template_name)
+    fputs(template_name, p);
+
+  // 0-delimiter fields in xargs input
+  putc('\0', p);
+
+  // the directory containing templates
+  fputs("/usr/share/retrolire/templates/", p);
+
+  // close the pipe
+  pclose(p);
+
+  // edit the file
+  edit_file(FILEPATH);
+
+  // add the bibtex file
+  command_add_bibtex(FILEPATH, 1);
+
+  return 1;
+#undef FILEPATH
+}
