@@ -44,29 +44,23 @@ retrolire list \
     --var 'publisher.amsterdam|p\.o\.l'
 ```
 
-#### -v --var
+-v --var
+: Key value filter on [csl variables](https://aurimasv.github.io/z2csl/typeMap.xml). Argument: field.[regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) (e.g. `title.network`).
 
-Key value filter on [csl variables](https://aurimasv.github.io/z2csl/typeMap.xml). Argument: field.[regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) (e.g. `title.network`).
+-s --search
+: Search for a pattern in reading notes. Argument: [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP).
 
-#### -s --search
+-t --tag
+: Search entry with a tag. 
 
-Search for a pattern in reading notes. Argument: [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP).
+-c --concept
+: Search for entry with a certain concept defined in reading notes. Argument: [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP).
 
-#### -t --tag
+-q --quote
+: Search for entry with a pattern in quotes. Argument: [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP).
 
-Search entry with a tag. 
-
-#### -c --concept
-
-Search for entry with a certain concept defined in reading notes. Argument: [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP).
-
-#### -q --quote
-
-Search for entry with a pattern in quotes. Argument: [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP).
-
-#### -l --last
-
-Select last edited/modified entry.
+-l --last
+: Select last edited/modified entry.
 
 <!--
 | option | description | argument |
