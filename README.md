@@ -27,7 +27,7 @@ retrolire COMMAND [OPTIONS]
 | [init](#init) | init a database. |
 | [delete](#delete) | delete an entry. |
 
-Most commands operate on a single entry (`edit`, `cite`). Some others show information about many (`list`). Thus, __rétrolire__ mostly relies upon _selection_ and _filter_ mechanisms. _Filtering_ is done statically through options, while [fzf](https://github.com/junegunn/fzf) is used as the interactive _selection_ (picking) interface.
+Most commands operate on a single entry (e.g. `edit`, `cite`). Some others show information about many (e.g. `list`). Thus, __rétrolire__ mostly relies upon _selection_ and _filter_ mechanisms. _Filtering_ is done statically through options, while [fzf](https://github.com/junegunn/fzf) is used as the interactive _selection_ (picking) interface.
 
 ## options
 
