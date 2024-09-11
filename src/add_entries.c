@@ -362,10 +362,10 @@ command_add_template(char* template_name)
 
   // exit function if popen failed.
   if (!p)
-      return 0;
+    return 0;
 
-  // put the file name if one is used as parameter. if none, an empty
-  // strings (delimited by single quotes) id passed.
+  // put the file name if one is used as parameter. if none, an
+  // empty strings (delimited by single quotes) id passed.
   if (template_name)
     fputs(template_name, p);
 

@@ -138,7 +138,7 @@ command_add(char* method, char* identifier)
   }
 
   else if (strstarts("template", method)) {
-      command_add_template(identifier);
+    command_add_template(identifier);
   }
 
   else {
