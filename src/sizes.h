@@ -1,4 +1,9 @@
-/* most of macros are here. */
+/* sizes
+ * -----
+ *
+ * macros for buffer sizes.
+ *
+ * */
 
 /* macros for string size. */
 #define FIELD_SIZE 48
