@@ -117,6 +117,46 @@ retrolire open -t '_àlire'
 
 ![](./img/open.gif)
 
+### file
+
+The `file` action adds a __file__ to an entry. It takes the file path as an argument.
+
+```bash
+# Associate the file './la_maison_de_wittgenstein.pdf' with the entry 'commetti2017'
+retrolire add file './la_maison_de_wittgenstein.pdf' -i 'cometti2017'
+```
+
+### tag
+
+The `tag` action edits (in the `$EDITOR`) the tags of an entry. It takes an optional argument `pick` that allows selecting (with fzf) tags from the tags already used.
+
+### add
+
+The `add` action adds bibliographic entries from a [bibtex](https://www.bibtex.org/) or [csl-json](https://citeproc-js.readthedocs.io/en/last/csl-json/markup.html) file, or a single one from a [doi](https://dx.doi.org/), an [isbn](https://en.wikipedia.org/wiki/International_Standard_Book_Number), or a template to fill.
+
+It requires two arguments:
+
+- The method: `bibtex` or `json` to import multiple entries from a file, `doi` or `isbn` to retrieve information of an entry from an identifier, or `template` to manually fill values from a file already containing the fields.
+- The file (if method is `bibtex` or `json`), or the identifier (if `doi` or `isbn`). It can be left empty if the method is `template`.
+
+```bash
+# Add an entry from DOI
+retrolire add doi 10.58282/lht.3619
+```
+
+```bash
+# Import a bibliography in CSL-JSON format
+retrolire add json ../found_bibliography.json
+```
+
+```bash
+# Create a bibtex file from a template
+retrolire add template book
+```
+
+(The filter options are ignored.)
+
+
 ### print
 
 The `print` action shows the information of the chosen bibliography entries. (If no filter option is selected, it displays the entire bibliography. Unlike other options that use filters, there is no _selection_ of an entry with fzf: the `json` command displays all entries that match the filters.)
@@ -128,7 +168,7 @@ retrolire print -l
 
 ### json
 
-The `json` action works like `print`, but the entries are displayed in [csl-json](https://citeproc-js.readthedocs.io/en/last/csl-json/markup.html) format.
+The `json` action works like `list`, but the entries are displayed in [csl-json](https://citeproc-js.readthedocs.io/en/last/csl-json/markup.html) format.
 
 ```bash
 retrolire json -v 'author.(la )?rédaction' -t 'enquête'
@@ -159,40 +199,6 @@ retrolire update "container-title" -i 'becker2013'
 ![](./img/update.gif)
 
 ![](./img/update-editor.gif)
-
-### file
-
-The `file` action adds a __file__ to an entry. It takes the file path as an argument.
-
-```bash
-# Associate the file './la_maison_de_wittgenstein.pdf' with the entry 'commetti2017'
-retrolire add file './la_maison_de_wittgenstein.pdf' -i 'cometti2017'
-```
-
-### tag
-
-The `tag` action edits (in the `$EDITOR`) the tags of an entry. It takes an optional argument `pick` that allows selecting (with fzf) tags from the tags already used.
-
-### add
-
-The `add` action adds bibliographic entries from a [bibtex](https://www.bibtex.org/) or [csl-json](https://citeproc-js.readthedocs.io/en/last/csl-json/markup.html) file, or a single one from a [doi](https://dx.doi.org/), an [isbn](https://en.wikipedia.org/wiki/International_Standard_Book_Number), or a template to fill.
-
-It requires two arguments:
-
-- The method: `bibtex` or `json` to import multiple entries from a file, `doi` or `isbn` to retrieve information of an entry from an identifier, or `template` to manually fill values from a file already containing the fields.
-- The file (if method is `bibtex` or `json`), or the identifier (if `doi` or `isbn`). It can be left empty if the method is `template`.
-
-```bash
-# Import a bibliography in CSL-JSON format
-retrolire add json ../found_bibliography.json
-```
-
-```bash
-# Create a bibtex file from a template
-retrolire add template book
-```
-
-(The filter options are ignored.)
 
 ### init
 
