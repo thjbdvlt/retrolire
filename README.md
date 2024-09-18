@@ -267,19 +267,20 @@ source ~/.local/share/retrolire/retrolire-completion.bash
 
 ## installation
 
-__rétrolire__ can be installed by cloning this repository and running the `install.sh` script:
-
 ```bash
 git clone https://github.com/thjbdvlt/retrolire retrolire
 cd retrolire
-./install.sh
+make # compile
+sudo make install # install retrolire
+pipx install . # install some small command line python programs
 ```
 
-In addition to the executable `retrolire` (installed in /usr/bin), three other executables (python) are installed using [pipx](https://pipx.pypa.io/stable/installation/), if the command is available; otherwise using `pip`.
+In addition to the executable `retrolire` (installed in /usr/bin), four other executables (python) are installed using [pipx](https://pipx.pypa.io/stable/installation/):
 
 - `jsonarray2psql`: Converts a _array_ of _objects_ json to a _table_ (PostgreSQL).
 - `csljson-update`: Builds unique _ids_ for a csl-json.
 - `csl2psql`: Converts a csl-json to a _table_ (PostgreSQL): combines the other two commands (so that the JSON is parsed only once).
+- `fetchref`: Get a bibtex reference from a DOI or ISBN.
 
 ## doi / isbn
 
