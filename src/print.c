@@ -238,6 +238,10 @@ preview(char* id)
       }
     }
   }
+  else {
+    fputs(PQerrorMessage(conn), stderr);
+  }
+
   PQclear(res);
   res = PQexecParams(conn,
     "select notes from reading where id = $1",
@@ -251,14 +255,16 @@ preview(char* id)
     int n_rows = PQntuples(res);
     if (n_rows != 0) {
       char* data = PQgetvalue(res, 0, 0);
-      // PQgetisnull(res, 0, 0)
       if (data != NULL) {
-        // if (!PQgetisnull(res, 0, 0)) {
         fputs("\n\n", stdout);
         fputs(data, stdout);
       }
     }
   }
+  else {
+    fputs(PQerrorMessage(conn), stderr);
+  }
+
   putc('\n', stdout);
   PQclear(res);
   PQfinish(conn);

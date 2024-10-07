@@ -5,7 +5,7 @@
 #include "string.h"
 #include "util.h"
 
-#define KEY_VALUE_DELIMITER '.'
+#define KEY_VALUE_DELIMITER '='
 
 /* get the width of the terminal (used for printing results)
  * the function tries 3 ways of getting the terminal width:

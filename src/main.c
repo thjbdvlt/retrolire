@@ -96,8 +96,7 @@ parse_opt(int key, char* arg, struct argp_state* state)
     case 'p': // preview
       append_sh(arguments->sh, "--preview");
       append_sh(arguments->sh,
-        "retrolire list -i {1}; retrolire _preview {1} | bat -l md "
-        "-p --color=always");
+        "retrolire _preview {1} | bat -l md -p --color=always");
       append_sh(arguments->sh, "--preview-window");
       append_sh(arguments->sh, preview_pos);
       break;

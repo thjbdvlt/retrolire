@@ -35,7 +35,6 @@ do_underscore(char* argv[])
    * command (ACTION), and are kept in the same order.
    * it's just required to take off the first, and move
    * all others to the start (one position left). */
-  const char* params[VAL_SIZE] = {};
   char* pos[VAL_SIZE] = {};
   for (int i = 1; argv[i] != NULL; i++) {
     pos[i - 1] = argv[i];
@@ -46,8 +45,7 @@ do_underscore(char* argv[])
 
     case 'p': // _preview
       if (pos[1] != NULL) {
-        params[0] = pos[1];
-        if (preview((char*)params) != 0) {
+        if (preview(pos[1]) != 0) {
           exit(EXIT_SUCCESS);
         } else {
           exit(EXIT_FAILURE);
