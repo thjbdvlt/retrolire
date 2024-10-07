@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -646,7 +647,10 @@ command_file(char* id, char* pos[MAXPOS], int npos)
   int code;
 
   char* filepath = pos[0];
-  const char* const params[] = { id, filepath, NULL };
+  char buf[PATH_MAX];
+  char* filepath_real = realpath(filepath, buf);
+
+  const char* const params[] = { id, filepath_real, NULL };
 
   /* connect to database. */
   CONNECT
