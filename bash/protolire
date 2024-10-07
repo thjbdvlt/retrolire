@@ -133,9 +133,8 @@ import_ref() {
         ref="$($getter "$2")"
         csl=$(
             echo "$ref" |
-                pandoc -f bibtex -t bibtex |
-                # vipe |
-                pandoc -f bibtex -t csljson
+                # pandoc -f bibtex -t bibtex |
+                pandoc -f bibtex -t csljson # | vipe
         ) || _help "parsing error: cancelled."
         echo "$csl" | copy_to
     }
