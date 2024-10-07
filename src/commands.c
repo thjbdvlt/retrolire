@@ -101,6 +101,14 @@ queryp2(struct Stmt* slct,
   return 1;
 }
 
+void
+print_error_no_arg(char* argname)
+{
+    fputs("missing argument: ", stderr);
+    fputs(argname, stderr);
+    fputc('\n', stderr);
+}
+
 /* import -- import entries from doi/isbn/json/bibtex.
  *
  * import entries from csl-json, bibtex, doi, isbn or edit a
@@ -123,19 +131,31 @@ command_add(char* method, char* identifier)
 {
 
   if (strstarts("doi", method)) {
-    command_add_doi(identifier);
+    if (!identifier)
+      print_error_no_arg("doi");
+    else 
+      command_add_doi(identifier);
   }
 
   else if (strstarts("isbn", method)) {
-    command_add_isbn(identifier);
+    if (!identifier)
+      print_error_no_arg("isbn");
+    else 
+      command_add_isbn(identifier);
   }
 
   else if (strstarts("bibtex", method)) {
-    command_add_bibtex(identifier, 0);
+    if (!identifier)
+      print_error_no_arg("file");
+    else 
+      command_add_bibtex(identifier, 0);
   }
 
   else if (strstarts("json", method)) {
-    command_add_json(identifier, 0);
+    if (!identifier)
+      print_error_no_arg("file");
+    else 
+      command_add_json(identifier, 0);
   }
 
   else if (strstarts("template", method)) {
@@ -148,6 +168,7 @@ command_add(char* method, char* identifier)
       "available methods are: {doi,isbn,json,bibtex,template}.\n",
       method);
   }
+
 
   return 1;
 }

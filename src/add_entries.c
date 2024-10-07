@@ -57,12 +57,9 @@ int
 command_add_bibtex(char* filepath, int remove_file)
 {
 
-  // create a temporary file to put the JSON
-  char tmp_filepath[] = "/tmp/retrolire.XXXXXX";
-  if (mkstemp(tmp_filepath) == -1) {
-    if (remove_file) {
-      remove(filepath);
-    }
+  char tmp_filepath[] = "/tmp/retrolire.XXXXXX.json";
+  if (mkstemps(tmp_filepath, 5) == -1) {
+    fputs("error creating temporary file.\n", stderr);
     return 0;
   }
 
@@ -120,6 +117,9 @@ command_add_bibtex(char* filepath, int remove_file)
       }
     }
 
+    // edit the JSON file
+    edit_file(tmp_filepath);
+
     // add the CSL-JSON file in the database, using csl2psql
     command_add_json(tmp_filepath, 1);
 
@@ -137,8 +137,8 @@ command_add_isbn(char* isbn)
 {
 
   // create a temporary file
-  char tmp_filepath[] = "/tmp/retrolire.XXXXXX.bib";
-  if (mkstemps(tmp_filepath, 4) == -1) {
+  char tmp_filepath[] = "/tmp/retrolire.XXXXXX.json";
+  if (mkstemps(tmp_filepath, 5) == -1) {
     fputs("error creating temporary file.\n", stderr);
     return 0;
   }
@@ -191,12 +191,6 @@ command_add_isbn(char* isbn)
       }
     }
 
-    // format the bibtex file.
-    format_bibtex(tmp_filepath);
-
-    // edit the formatted filepath
-    edit_file(tmp_filepath);
-
     // add the generated bibtex file to the database.
     command_add_bibtex(tmp_filepath, 1);
   }
@@ -209,8 +203,8 @@ command_add_doi(char* doi)
 {
 
   // create a temporary file
-  char tmp_filepath[] = "/tmp/retrolire.XXXXXX.bib";
-  if (mkstemps(tmp_filepath, 4) == -1) {
+  char tmp_filepath[] = "/tmp/retrolire.XXXXXX.json";
+  if (mkstemps(tmp_filepath, 5) == -1) {
     fputs("error creating temporary file.\n", stderr);
     return 0;
   }
@@ -258,12 +252,6 @@ command_add_doi(char* doi)
       }
     }
 
-    // format the bibtex file.
-    format_bibtex(tmp_filepath);
-
-    // edit the formatted filepath
-    edit_file(tmp_filepath);
-
     // add the bibtex to the database.
     command_add_bibtex(tmp_filepath, 1);
   }
@@ -276,8 +264,8 @@ format_bibtex(char* filepath)
 {
 
   // create a temporary file
-  char tmp_filepath[] = "/tmp/retrolire.XXXXXX.bib";
-  if (mkstemps(tmp_filepath, 4) == -1) {
+  char tmp_filepath[] = "/tmp/retrolire.XXXXXX.json";
+  if (mkstemps(tmp_filepath, 5) == -1) {
     fputs("error creating temporary file.\n", stderr);
     return 0;
   }
@@ -347,7 +335,6 @@ format_bibtex(char* filepath)
   return 1;
 }
 
-// TODO: add templates
 int
 command_add_template(char* template_name)
 {
