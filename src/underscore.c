@@ -10,20 +10,71 @@
 #include "util.h"
 
 int
-underscore_add(char* pos[VAL_SIZE])
-// TODO: changer ça
+underscore_input(char* id)
 {
-  // if (pos[1] == NULL) {
-  //   fprintf(stderr, "missing arg.\n");
-  //   return 0;
-  // } else if (strstarts("file", pos[1]) != 0) {
-  //   return underscore_file(pos[2], pos[3]);
-  // } else if (strstarts("tags", pos[1]) != 0) {
-  //   return underscore_add_tags(pos[2]);
-  // } else {
-  //   fprintf(stderr, "invalid arg for add (%s).\n", pos[1]);
-  //   return 0;
-  // }
+  // print the current selection.
+  fputs("\nCURRENT SELECTION:\n>>>>> ", stdout);
+  head_entry(id);
+  fputs("<<<<<\n\nCOMMAND: \n", stdout);
+
+  // read user input (command name)
+  char line[256];
+  char* x = fgets(line, sizeof(line), stdin);
+
+  // remove the newline at the end
+  for (int i = 0; i < 256; i++) {
+    if (x[i] == '\n' || x[i] == ' ') {
+      x[i] = '\0';
+      break;
+    }
+  }
+
+  // check that the command exists and exist if it doesn't
+  if (!check_command_name(x)) {
+    fputs("UNKNOWN COMMAND: ", stdout);
+    fputs(line, stdout);
+    fputs("\n", stdout);
+    exit(EXIT_FAILURE);
+  }
+
+  // pseudo positional argument (so i can use the commands)
+  int npos = 0;
+  char* pos[MAXPOS] = {};
+  int (*func)(char*, char* [MAXPOS], int) = NULL;
+
+  switch (x[0]) {
+    case 't':
+      func = command_tag_edit;
+      break;
+
+    case 'e':
+      func = command_edit;
+      break;
+
+    case 'o':
+      func = command_open;
+      break;
+
+    case 'p':
+      func = command_print;
+      break;
+
+    case 'd':
+      // delete is destructive: it asks for confirmation.
+      if (!ask_confirmation()) {
+        exit(EXIT_SUCCESS);
+      }
+      func = command_delete;
+      // TODO: update list of entries after deletion..?
+      break;
+
+      // TODO: support command 'update'
+
+    default:
+      break;
+  }
+
+  (*func)(id, pos, npos);
   return 1;
 }
 
@@ -42,6 +93,11 @@ do_underscore(char* argv[])
 
   switch (argv[1][1]) {
 
+    // test: input
+    case 'i':
+      underscore_input(pos[1]);
+      break;
+
     case 'p': // _preview
       if (pos[1] != NULL) {
         if (preview(pos[1]) != 0) {
@@ -52,16 +108,12 @@ do_underscore(char* argv[])
       }
       break;
 
-    case 'l': // _list
-      switch (argv[1][2]) {
-        case 't':
-          list_tags();
-          break;
-        case 'f':
-          list_fields();
-        default:
-          break;
-      }
+    case 'T':
+      list_tags(); // Tags (completion)
+      break;
+
+    case 'F': // Fields (completion)
+      list_fields();
       break;
 
     case 't': // _tag
@@ -102,11 +154,6 @@ do_underscore(char* argv[])
     case 'o': // _open
       check_nonull(pos[1], "ENTRY_ID");
       command_open(pos[1], pos, 0);
-      break;
-
-    case 'a': // add
-      check_nonull(pos[1], "[TAGS|FILE]");
-      underscore_add(pos);
       break;
 
     case 'd': // _update

@@ -344,3 +344,14 @@ cache_entry(char* id)
 
   return 1;
 }
+
+int
+ask_confirmation()
+{
+  fputs("\nconfirm [y/N]: ", stdout);
+  if (getchar() != 'y') {
+    fputs("cancelled.\n", stdout);
+    return 0;
+  }
+  return 1;
+}

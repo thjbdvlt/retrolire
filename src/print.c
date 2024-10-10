@@ -237,8 +237,7 @@ preview(char* id)
         fputc('\n', stdout);
       }
     }
-  }
-  else {
+  } else {
     fputs(PQerrorMessage(conn), stderr);
   }
 
@@ -260,8 +259,7 @@ preview(char* id)
         fputs(data, stdout);
       }
     }
-  }
-  else {
+  } else {
     fputs(PQerrorMessage(conn), stderr);
   }
 

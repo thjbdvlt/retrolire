@@ -104,9 +104,9 @@ queryp2(struct Stmt* slct,
 void
 print_error_no_arg(char* argname)
 {
-    fputs("missing argument: ", stderr);
-    fputs(argname, stderr);
-    fputc('\n', stderr);
+  fputs("missing argument: ", stderr);
+  fputs(argname, stderr);
+  fputc('\n', stderr);
 }
 
 /* import -- import entries from doi/isbn/json/bibtex.
@@ -133,28 +133,28 @@ command_add(char* method, char* identifier)
   if (strstarts("doi", method)) {
     if (!identifier)
       print_error_no_arg("doi");
-    else 
+    else
       command_add_doi(identifier);
   }
 
   else if (strstarts("isbn", method)) {
     if (!identifier)
       print_error_no_arg("isbn");
-    else 
+    else
       command_add_isbn(identifier);
   }
 
   else if (strstarts("bibtex", method)) {
     if (!identifier)
       print_error_no_arg("file");
-    else 
+    else
       command_add_bibtex(identifier, 0);
   }
 
   else if (strstarts("json", method)) {
     if (!identifier)
       print_error_no_arg("file");
-    else 
+    else
       command_add_json(identifier, 0);
   }
 
@@ -168,7 +168,6 @@ command_add(char* method, char* identifier)
       "available methods are: {doi,isbn,json,bibtex,template}.\n",
       method);
   }
-
 
   return 1;
 }

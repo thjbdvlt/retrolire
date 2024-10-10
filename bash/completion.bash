@@ -16,11 +16,13 @@ _retrolire(){
             poss="$commands"
             ;;
         -v | --var)
-            getter='_lfields'
+            # getter='_lfields'
+            getter='_Fields'
             suff='='
             ;;
         -t | --tag)
-            getter="_ltags"
+            # getter="_ltags"
+            getter="_Tags"
             ;;
         d | de | del | dele | delet | delete)
             poss="entry file"
@@ -32,7 +34,7 @@ _retrolire(){
             poss='doi isbn template json bibtex'
             ;;
         u | up | upd | upda | updat | update)
-            getter='_lfields'
+            getter='_Fields'
             ;;
         -i | --id)
             poss=''

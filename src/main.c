@@ -97,8 +97,8 @@ parse_opt(int key, char* arg, struct argp_state* state)
       append_sh(arguments->sh, "--preview");
       append_sh(arguments->sh,
         "retrolire _preview {1} | bat -l md -p --color=always");
-      append_sh(arguments->sh, "--preview-window");
-      append_sh(arguments->sh, preview_pos);
+      // append_sh(arguments->sh, "--preview-window");
+      // append_sh(arguments->sh, preview_pos);
       break;
     case 'T': // showtags
       arguments->showtags = 1;
@@ -229,19 +229,26 @@ main(int argc, char** argv)
   // the command for the Shell Command (pseudo-popen2). it's made of
   // an array of strings, so it will be passed as argv to execvp.
   char* pick_command[] = { "fzf",
-    "--read0",
+    "--read0", // \0 as record delimiter
     "-d",
-    "\\n\\t",
+    "\\n\\t", // field delimiter
     "--tiebreak",
     "begin",
-    "--bind",
+    "-0",     // cancel if no result
+    "--bind", // keybinding to select an entry
     "enter:become(echo -n {1}),one:become(echo -n {1})",
-    "-0",
+    "--preview-window", // preview position is set even without `-p`
+    preview_pos,        // from config.h
+    "--bind",           // preview information about an entry
+    "?:preview(retrolire _previ {1} | bat -l md -p --color=always)",
+    // test: :
+    "--bind",
+    // TODO: avoir une underscore commande retrolire qui fait ça, je
+    // dirais!
+    "::execute(retrolire _input {1})",
     NULL,   // --exact
     NULL,   // --preview (1): --preview
     NULL,   // --preview (1b):(preview command)
-    NULL,   // --preview (2): --preview-window
-    NULL,   // --preview (2b): (window position)
     NULL }; // the args in execvp must be NULL-terminated
   struct ShCmd sh;
   init_sh(&sh, pick_command);

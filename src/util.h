@@ -65,6 +65,9 @@ checkconn(PGconn* conn);
 int
 get_term_width();
 
+int
+ask_confirmation();
+
 /* two macros to connect or reconnect to database, because
  * connection is everywhere so it's easier have a macro (for
  * consistency). */

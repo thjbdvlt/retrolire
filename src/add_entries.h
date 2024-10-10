@@ -1,6 +1,6 @@
 /* add_entries
  * -----------
- *  
+ *
  * add entries to the database.
  *
  * */

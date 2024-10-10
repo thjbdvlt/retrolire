@@ -14,3 +14,4 @@ valgrind-output.txt
 .tags
 test.bib
 variables.bash
+test.sh
