@@ -24,7 +24,6 @@ underscore_add(char* pos[VAL_SIZE])
   //   fprintf(stderr, "invalid arg for add (%s).\n", pos[1]);
   //   return 0;
   // }
-
   return 1;
 }
 
