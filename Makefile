@@ -31,7 +31,6 @@ install: ./bin/retrolire
 	cp ./bash/completion.bash ./schema.sql -r templates $(DATADIR)/
 
 uninstall:
-	@# remove the binary and the bash script
 	sudo rm -rf $(BINDIR)/retrolire $(BINDIR)/protolire $(DATADIR)
 
 install-pipx:
@@ -41,11 +40,9 @@ uninstall-pipx:
 	pipx uninstall retrolire
 
 bin:
-	# the directory containing the binary in the project directory
 	mkdir bin
 
 config.h:
-	# generate the config file from config.def.h
 	cp config.def.h config.h
 
 .PHONY: clean run
