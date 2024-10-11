@@ -46,7 +46,7 @@ retrolire list \
 
 | option | description | argument |
 | ------ | ----------- | -------- |
-| `-v` | key-value filter on [csl variables](https://aurimasv.github.io/z2csl/typeMap.xml) | field.[regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) |
+| `-v` | key-value filter on [csl variables](https://aurimasv.github.io/z2csl/typeMap.xml) | field=[regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) |
 | `-t` | search in tags | tag |
 | `-s` | search a pattern in reading notes | [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) |
 | `-q` | search a pattern in quotes | [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) |
