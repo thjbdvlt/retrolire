@@ -84,6 +84,7 @@ retrolire open -nt _read -t poetry
 ## selection
 
 While filtering through options can use any csl variable (_title_, _translator_, _publisher_, etc.), the selection with [fzf](https://github.com/junegunn/fzf) only uses variables _title_ and _author_ (if an entry has no _author_, then its _editor_ or _translator_).
+You can call some commands (`open`, `tag`, `edit` and `delete`) from within the fzf selection interface, using `:` (for example `:delete` ).
 
 ![](./img/fzf-interface.png)
 

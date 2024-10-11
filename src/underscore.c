@@ -71,6 +71,7 @@ underscore_input(char* id)
       // TODO: support command 'update'
 
     default:
+      exit(EXIT_FAILURE);
       break;
   }
 
