@@ -19,15 +19,15 @@ all:
 $(bin): config.h bin
 	$(CC) src/*.c -o $(bin) $(CCFLAGS)
 
-install: ./bin/retrolire
-	@# create the directory for the binary if it does not exists
-	mkdir -p $(BINDIR)
-	@# copy the binary (retrolire) and the bash script (protolire)
+$(BINDIR):
+	mkdir $(BINDIR)
+
+$(DATADIR):
+	mkdir $(DATADIR)
+
+install: ./bin/retrolire $(BINDIR) $(DATADIR)
 	sudo cp $(bin) $(BINDIR)
 	sudo cp ./bash/protolire $(BINDIR)
-	@# create the directory for the data (mainly schema.sql)
-	mkdir -p $(DATADIR)
-	@# copy data
 	cp ./bash/completion.bash ./schema.sql -r templates $(DATADIR)/
 
 uninstall:

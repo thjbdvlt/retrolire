@@ -33,13 +33,14 @@ static char doc[] =
 static struct argp_option options[] = {
   // long -- short -- argname -- optional -- doc -- group
   { 0, 0, NULL, OPTION_DOC,  "filters:", 1},
-  { "var", 'v', "field=regex", 0, "field-value search " , 0},
+  { "var", 'v', "field=regex", 0, "field-value search" , 0},
+  { "not", 'n', NULL, 0, "add negation on next condition" , 0},
   { "tag", 't', "tag", 0, "filter entries with a tag", 0},
   { "search", 's', "regex", 0, "search pattern in reading notes", 0 },
   { "quote", 'q', "regex", 0, "search pattern in quotes", 0 },
   { 0, 0, NULL, OPTION_DOC,  "selection (fzf):", 2},
   { "exact", 'e', NULL, 0, "no fuzzy matching" , 0},
-  { "preview", 'p', NULL, 0, "show entry infos, files and notes." , 0},
+  { "preview", 'p', NULL, 0, "show entry infos, files and notes" , 0},
   { "showtags", 'T', NULL, 0, "list tags for in the fzf picker" , 0},
   { 0, 0, NULL, OPTION_DOC,  "history:", 3},
   { "last", 'l', NULL, 0, "select the last selected entry" , 0},
@@ -97,8 +98,6 @@ parse_opt(int key, char* arg, struct argp_state* state)
       append_sh(arguments->sh, "--preview");
       append_sh(arguments->sh,
         "retrolire _preview {1} | bat -l md -p --color=always");
-      // append_sh(arguments->sh, "--preview-window");
-      // append_sh(arguments->sh, preview_pos);
       break;
     case 'T': // showtags
       arguments->showtags = 1;
@@ -111,6 +110,10 @@ parse_opt(int key, char* arg, struct argp_state* state)
       break;
     case 'o': // recent
       arguments->pick = 0;
+      break;
+
+      // TODO: 
+    case 'n': // not
       break;
 
     case 'v': // var, e.g."author=antin", are processed later

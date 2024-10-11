@@ -105,6 +105,7 @@ cat_cnd(struct Stmt* cnd, char* s_start, char* s_end, int npar)
    * (i think?) so it's needed to do memccpy(p+1) for chain
    * concatenation. */
   char* strings[] = { WHEREAND(npar), s_start, ph, s_end };
+  // TODO: add 
   for (long unsigned int i = 0; i < sizeof(strings) / sizeof(char*);
        i++) {
     if (append_stmt(cnd, strings[i]) == 0) {
