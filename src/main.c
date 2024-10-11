@@ -20,34 +20,36 @@ static char doc[] =
   "  cite\n"
   "  open\n"
   "  add METHOD {IDENTIFIER|FILE}\n"
-  "  tag\n"
+  "  tag [pick]\n"
   "  json\n"
   "  file FILE\n"
   "  delete\n"
   "  refer\n"
   "  print\n"
   "  quote\n"
-  "  update\n";
+  "  update FIELD\n";
 
 // clang-format off
 static struct argp_option options[] = {
   // long -- short -- argname -- optional -- doc -- group
   { 0, 0, NULL, OPTION_DOC,  "filters:", 1},
   { "var", 'v', "field=regex", 0, "field-value search" , 0},
-  { "not", 'n', NULL, 0, "add negation on next condition" , 0},
   { "tag", 't', "tag", 0, "filter entries with a tag", 0},
   { "search", 's', "regex", 0, "search pattern in reading notes", 0 },
   { "quote", 'q', "regex", 0, "search pattern in quotes", 0 },
-  { 0, 0, NULL, OPTION_DOC,  "selection (fzf):", 2},
+  { 0, 0, NULL, OPTION_DOC,  "logical operators:", 2},
+  { "not", 'n', NULL, 0, "" , 0},
+  { "or", 'o', NULL, 0, "" , 0},
+  { 0, 0, NULL, OPTION_DOC,  "selection (fzf):", 3},
   { "exact", 'e', NULL, 0, "no fuzzy matching" , 0},
   { "preview", 'p', NULL, 0, "show entry infos, files and notes" , 0},
   { "showtags", 'T', NULL, 0, "list tags for in the fzf picker" , 0},
-  { 0, 0, NULL, OPTION_DOC,  "history:", 3},
+  { 0, 0, NULL, OPTION_DOC,  "history:", 4},
   { "last", 'l', NULL, 0, "select the last selected entry" , 0},
   { "recent", 'r', NULL, 0, "order entries by recent editing", 0 },
-  { 0, 0, NULL, OPTION_DOC,  "misc:", 4},
+  { 0, 0, NULL, OPTION_DOC,  "misc:", 5},
   { "id", 'i', "id", 0, "specified the entry id " , 0},
-  { "output", 'o', NULL, 0, "do not interactively pick an id" , 0},
+  { "output", 'O', NULL, 0, "do not interactively pick an id" , 0},
   { 0 }
 };
 // clang-format on
@@ -108,9 +110,13 @@ parse_opt(int key, char* arg, struct argp_state* state)
     case 'r': // recent
       arguments->lastedit = 2;
       break;
-    case 'o': // recent
+    case 'O': // Output
       // TODO: rename this one. maybe S or O, or -_
       arguments->pick = 0;
+      break;
+
+    case 'o': // TEST
+      arguments->cnd->next_or = 1;
       break;
 
       // TODO: 

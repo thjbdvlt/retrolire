@@ -165,8 +165,7 @@ split_v(struct FieldValue* fv, char* s)
 #undef MSGERROR
 }
 
-/* parse an argument for option -v (key=value) and build the WHERE
-clause. */
+/* parse an argument for option -v and build the WHERE clause. */
 char*
 parse_key_value(PGconn* conn,
   struct Stmt* cnd,

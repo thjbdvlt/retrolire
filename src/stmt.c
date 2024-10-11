@@ -113,8 +113,21 @@ cat_cnd(struct Stmt* cnd, char* s_start, char* s_end, int npar)
    *   logical operator NOT.
    * - append the condition, with the placeholder for its value.
    *   */
-  if (!append_stmt(cnd, WHEREAND(npar)))
+  // if (!append_stmt(cnd, WHEREAND(npar)))
+  //   return 0;
+  char *logical_operators[] = {"WHERE ", " AND ", " OR "};
+  char *ope;
+
+  if (npar == 0)
+    ope = logical_operators[0];
+  else if (cnd->next_or)
+    ope = logical_operators[2];
+  else
+    ope = logical_operators[1];
+
+  if (!append_stmt(cnd, ope))
     return 0;
+
   if (cnd->next_not) {
     if (!append_stmt(cnd, " not "))
       return 0;
