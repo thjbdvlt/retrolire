@@ -51,7 +51,18 @@ retrolire list \
 | `-s` | search a pattern in reading notes | [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) |
 | `-q` | search a pattern in quotes | [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) |
 | `-c` | search a pattern in concepts | [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) |
-| `-l` | select the last edited entry |
+| `-l` | select the last edited entry ||
+
+the logical condition `-n` `--not` negates the next filter option:
+
+```bash
+# select entries that DOES NOT have the tag "_read"
+# but that DO have the tag "poetry".
+retrolire open --not --tag _read --tag poetry
+retrolire open -nt _read -t poetry
+```
+
+| `-n` | negates the next condition (`NOT` keyword)||
 
 ![](./img/quote.gif)
 
