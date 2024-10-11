@@ -12,6 +12,8 @@ init_stmt(struct Stmt* s, char* source, size_t total, size_t used)
   s->end = &source[(used == 0) ? 1 : used];
   s->total = total;
   s->remain = total - used;
+  s->next_or = 0;
+  s->next_not = 0;
 }
 
 void
@@ -105,18 +107,14 @@ cat_cnd(struct Stmt* cnd, char* s_start, char* s_end, int npar)
    * (i think?) so it's needed to do memccpy(p+1) for chain
    * concatenation. */
 
-  // TODO: add the OR operator for option -o --or.
-
   /* steps in the process of appending a conditional statement:
    * - append WHERE/AND depending of it's the first condition.
    * - then, if option -n is used before the current condition, add the
    *   logical operator NOT.
    * - append the condition, with the placeholder for its value.
    *   */
-  // if (!append_stmt(cnd, WHEREAND(npar)))
-  //   return 0;
-  char *logical_operators[] = {"WHERE (", ") AND (", " OR "};
-  char *ope;
+  char *logical_operators[] = {"WHERE (", ") AND (", " OR ", NULL};
+  char *ope = "";
 
   if (npar == 0)
     ope = logical_operators[0];
@@ -128,11 +126,13 @@ cat_cnd(struct Stmt* cnd, char* s_start, char* s_end, int npar)
   if (!append_stmt(cnd, ope))
     return 0;
 
+  // TODO: fix something here (uninitialize value)
   if (cnd->next_not) {
     if (!append_stmt(cnd, " not "))
       return 0;
     cnd->next_not = 0; // reset value
   }
+
   char* strings[] = { s_start, ph, s_end };
   for (long unsigned int i = 0; i < sizeof(strings) / sizeof(char*);
        i++) {
