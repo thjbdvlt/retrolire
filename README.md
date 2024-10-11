@@ -88,6 +88,86 @@ You can call some commands (`open`, `tag`, `edit` and `delete`) from within the 
 
 ![](./img/fzf-interface.png)
 
+## notes parsing
+
+When a reading note is modified (or added), its content is parsed to find and extract __quotes__ and __concepts__.
+
+### quotes
+
+If some __quotes__ are found, they are indexed and put in another table: with the command `quote`, the user can get these quotes (formatted to be put in pandocs-markdown document).
+
+The parsing/extraction requires that the reading note is written in [markdown](https://pandoc.org/chunkedhtml-demo/8-pandocs-markdown.html). Only blockquotes are indexed as quotes. Page number can be precised at the end of the quote, in parentheses or in brackets,:
+
+```markdown
+a normal paragraph
+
+> a quote [32]
+
+> another quote (p. 32)
+
+> here too, another quote (32-33)
+
+another normal paragraph
+```
+
+### concepts
+
+Reading notes are also parsed in order to find concept definitions (that user can get using `concept` command).
+The syntax used is the syntax for [definition list](https://pandoc.org/MANUAL.html#definition-lists) in pandoc markdown, with one difference: a concept may only have one definition.
+
+```markdown
+
+concept
+: definition
+
+```
+
+## configuration
+
+The configuration file is [./config.h](./config.h). The software needs to be recompiled (`make && make install`) so the changes can be effective.
+
+## completion (bash)
+
+The completion script (bash) allows for automatic completion of __actions__, __options__, tags, and fields (variables). To use it, source it in the `.bashrc`.
+
+```bash
+source ~/.local/share/retrolire/retrolire-completion.bash
+```
+
+## installation
+
+```bash
+git clone https://github.com/thjbdvlt/retrolire retrolire
+cd retrolire
+make # compile
+sudo make install # install retrolire
+pipx install . # install some small command line python programs
+```
+
+retrolire does not by itself create a database. you must do it by yourself (the database name must match the name set in `config.h`) and then you can just pipe the PostgreSQL schema into that empty database:
+
+```bash
+psql -c 'create database retrolire'
+retrolire _schema | psql -d retrolire
+```
+
+In addition to the executable `retrolire` (installed in /usr/bin), four other executables (python) are installed using [pipx](https://pipx.pypa.io/stable/installation/):
+
+- `jsonarray2psql`: Converts a _array_ of _objects_ json to a _table_ (PostgreSQL).
+- `csljson-update`: Builds unique _ids_ for a csl-json.
+- `csl2psql`: Converts a csl-json to a _table_ (PostgreSQL): combines the other two commands (so that the JSON is parsed only once).
+- `fetchref`: Get a bibtex reference from a DOI or ISBN.
+
+## neovim integration
+
+__rétrolire__ is also a [neovim](https://neovim.io/) plugin. to install it with [lazy](https://github.com/folke/lazy.nvim), add this line to you plugins file:
+
+```lua
+{ 'thjbdvlt/retrolire', ft = 'markdown' },
+```
+
+Two commands will be available from within [neovim](https://neovim.io/): `Quote` and `Cite`.
+
 ## commands
 
 Each command can be called by its complete name or by a small part of it (e.g., `ed` for `edit`). All actions (except `add`) can be used with any options.
@@ -209,86 +289,6 @@ retrolire update "container-title" -i 'becker2013'
 ![](./img/update.gif)
 
 ![](./img/update-editor.gif)
-
-## neovim integration
-
-__rétrolire__ is also a [neovim](https://neovim.io/) plugin. to install it with [lazy](https://github.com/folke/lazy.nvim), add this line to you plugins file:
-
-```lua
-{ 'thjbdvlt/retrolire', ft = 'markdown' },
-```
-
-Two commands will be available from within [neovim](https://neovim.io/): `Quote` and `Cite`.
-
-## notes parsing
-
-When a reading note is modified (or added), its content is parsed to find and extract __quotes__ and __concepts__.
-
-### quotes
-
-If some __quotes__ are found, they are indexed and put in another table: with the command `quote`, the user can get these quotes (formatted to be put in pandocs-markdown document).
-
-The parsing/extraction requires that the reading note is written in [markdown](https://pandoc.org/chunkedhtml-demo/8-pandocs-markdown.html). Only blockquotes are indexed as quotes. Page number can be precised at the end of the quote, in parentheses or in brackets,:
-
-```markdown
-a normal paragraph
-
-> a quote [32]
-
-> another quote (p. 32)
-
-> here too, another quote (32-33)
-
-another normal paragraph
-```
-
-### concepts
-
-Reading notes are also parsed in order to find concept definitions (that user can get using `concept` command).
-The syntax used is the syntax for [definition list](https://pandoc.org/MANUAL.html#definition-lists) in pandoc markdown, with one difference: a concept may only have one definition.
-
-```markdown
-
-concept
-: definition
-
-```
-
-## configuration
-
-The configuration file is [./config.h](./config.h). The software needs to be recompiled (`make && make install`) so the changes can be effective.
-
-## completion (bash)
-
-The completion script (bash) allows for automatic completion of __actions__, __options__, tags, and fields (variables). To use it, source it in the `.bashrc`.
-
-```bash
-source ~/.local/share/retrolire/retrolire-completion.bash
-```
-
-## installation
-
-```bash
-git clone https://github.com/thjbdvlt/retrolire retrolire
-cd retrolire
-make # compile
-sudo make install # install retrolire
-pipx install . # install some small command line python programs
-```
-
-retrolire does not by itself create a database. you must do it by yourself (the database name must match the name set in `config.h`) and then you can just pipe the PostgreSQL schema into that empty database:
-
-```bash
-psql -c 'create database retrolire'
-retrolire _schema | psql -d retrolire
-```
-
-In addition to the executable `retrolire` (installed in /usr/bin), four other executables (python) are installed using [pipx](https://pipx.pypa.io/stable/installation/):
-
-- `jsonarray2psql`: Converts a _array_ of _objects_ json to a _table_ (PostgreSQL).
-- `csljson-update`: Builds unique _ids_ for a csl-json.
-- `csl2psql`: Converts a csl-json to a _table_ (PostgreSQL): combines the other two commands (so that the JSON is parsed only once).
-- `fetchref`: Get a bibtex reference from a DOI or ISBN.
 
 ## doi / isbn
 
