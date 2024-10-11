@@ -115,6 +115,7 @@ parse_opt(int key, char* arg, struct argp_state* state)
 
       // TODO: 
     case 'n': // not
+      arguments->cnd->next_not = 1;
       break;
 
       // TODO: -o --or

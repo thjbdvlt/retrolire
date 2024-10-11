@@ -26,7 +26,8 @@ struct Stmt
   size_t total;
   char* end;
   char* start;
-  char name[10];
+  int next_not; // TEST
+  // char name[10]; // REMOVE?
 };
 
 /* initiliase a Stmt from a string. */

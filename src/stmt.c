@@ -104,8 +104,23 @@ cat_cnd(struct Stmt* cnd, char* s_start, char* s_end, int npar)
    * structure, because of memccpy returning the end +1 of a string
    * (i think?) so it's needed to do memccpy(p+1) for chain
    * concatenation. */
-  char* strings[] = { WHEREAND(npar), s_start, ph, s_end };
-  // TODO: add 
+
+  // TODO: add the OR operator for option -o --or.
+
+  /* steps in the process of appending a conditional statement:
+   * - append WHERE/AND depending of it's the first condition.
+   * - then, if option -n is used before the current condition, add the
+   *   logical operator NOT.
+   * - append the condition, with the placeholder for its value.
+   *   */
+  if (!append_stmt(cnd, WHEREAND(npar)))
+    return 0;
+  if (cnd->next_not) {
+    if (!append_stmt(cnd, " not "))
+      return 0;
+    cnd->next_not = 0; // reset value
+  }
+  char* strings[] = { s_start, ph, s_end };
   for (long unsigned int i = 0; i < sizeof(strings) / sizeof(char*);
        i++) {
     if (append_stmt(cnd, strings[i]) == 0) {
