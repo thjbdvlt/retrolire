@@ -172,10 +172,10 @@ In addition to the executable `retrolire` (installed in /usr/bin), four other ex
 
 ## neovim integration
 
-__rétrolire__ is also a [neovim](https://neovim.io/) plugin. to install it with [lazy](https://github.com/folke/lazy.nvim), add this line to you plugins file:
+To install the [neovim](https://neovim.io/) minimal plugin for __rétrolire__, e.g. with Lazy:
 
 ```lua
-{ 'thjbdvlt/retrolire', ft = 'markdown' },
+{ 'thjbdvlt/retrolire.nvim', ft = 'markdown' },
 ```
 
 Two commands will be available from within [neovim](https://neovim.io/): `Quote` and `Cite`.
