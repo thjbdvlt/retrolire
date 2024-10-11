@@ -355,3 +355,19 @@ ask_confirmation()
   }
   return 1;
 }
+
+int
+update_lastedit(PGconn *conn, char* id)
+{
+  const char* params[] = {id, NULL};
+  PGresult *res = PQexecParams(conn,
+    "update reading set lastedit = now() where id = $1",
+    1,
+    NULL,
+    params,
+    NULL,
+    NULL,
+    0);
+  PQclear(res);
+  return 1;
+}

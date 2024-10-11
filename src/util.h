@@ -65,8 +65,13 @@ checkconn(PGconn* conn);
 int
 get_term_width();
 
+/* ask user for confirmation. */
 int
 ask_confirmation();
+
+/* update lastedit. */
+int
+update_lastedit(PGconn *conn, char* id);
 
 /* two macros to connect or reconnect to database, because
  * connection is everywhere so it's easier have a macro (for

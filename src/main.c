@@ -257,7 +257,8 @@ main(int argc, char** argv)
     "retrolire _previ {1} | bat -l md -p --color=always",
     /* keybinding */
     "--bind", // keybinding to select an entry
-    "enter:become(echo -n {1}),one:become(echo -n {1})",
+    // "enter:become(echo -n {1}),one:become(echo -n {1})",
+    "enter:become(echo -n {1})",
     "--bind", // preview information about an entry
     "?:toggle-preview",
     "--bind", // command call using `:`, e.g. `:open`.

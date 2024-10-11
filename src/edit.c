@@ -179,19 +179,11 @@ edit_value(char* id, char* stmtselect, char* stmtupdate, char* ext)
     fprintf(stderr, "query failed:\n %s\n", PQerrorMessage(conn));
     code = 0;
   }
-  /* clear everything and exit function.*/
+
   PQclear(res);
 
-  // TODO: update lastedit
-  res = PQexecParams(conn, // TEST
-    "update reading set lastedit = now() where id = $1",
-    1,
-    NULL,
-    params_mod,
-    NULL,
-    NULL,
-    0);
-  PQclear(res);
+  update_lastedit(conn, id);
+
   PQfinish(conn);
 
   return code;

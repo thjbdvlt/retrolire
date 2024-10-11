@@ -537,6 +537,8 @@ command_open(char* id, char* pos[MAXPOS], int npos)
     return 0;
   }
 
+  update_lastedit(conn, id);
+
   /* end connection before fork/pipe/execvp, for safety. */
   PQfinish(conn);
 
