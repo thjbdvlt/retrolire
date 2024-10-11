@@ -53,13 +53,24 @@ retrolire list \
 | `-c` | search a pattern in concepts | [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) |
 | `-l` | select the last edited entry ||
 
-The logical condition `-n` `--not` negates the next filter option:
+there are also two options for logical operators:
+
+|short|long|description|
+|-----|----|-----------|
+| `-n`| `--not`| negates next condition|
+| `-o`| `--or`| next condition is grouped with previous one using the SQL operator `OR`|
 
 ```bash
 # select entries that DO NOT have the tag "_read"
 # but that DO have the tag "poetry".
 retrolire open --not --tag _read --tag poetry
 retrolire open -nt _read -t poetry
+```
+
+```bash
+# select entries that have tag 'cool' or tag 'magic'.
+retrolire -t cool -ot magic
+retrolire --tag 'cool' --or --tag 'magic'
 ```
 
 ![](./img/quote.gif)
@@ -324,6 +335,6 @@ License [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 - [ ] PDF annotations extraction, using [pdfannots](https://github.com/0xabu/pdfannots).
 - [ ] Vim plugin (vim script).
 - [x] option `-n` `--not`
-- [ ] option `-o` `--or`
+- [x] option `-o` `--or`
 - [x] call commands from within fzf interface using `:` (e.g. `:delete`).
 - [ ] bash completion for author names and words in title?
