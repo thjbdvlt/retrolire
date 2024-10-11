@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 16.4 (Debian 16.4-1.pgdg120+1)
--- Dumped by pg_dump version 16.4 (Debian 16.4-1.pgdg120+1)
+-- Dumped from database version 16.4 (Debian 16.4-1.pgdg120+2)
+-- Dumped by pg_dump version 16.4 (Debian 16.4-1.pgdg120+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -149,6 +149,8 @@ CREATE TABLE public.entry (
     "collection-number" text,
     genre text,
     number text,
+    serie text,
+    "container-title-short" text,
     CONSTRAINT valid_author CHECK ((((jsonb_typeof(author) = 'array'::text) AND (jsonb_typeof(author[0]) = 'object'::text)) OR (author IS NULL))),
     CONSTRAINT valid_container_author CHECK ((((jsonb_typeof("container-author") = 'array'::text) AND (jsonb_typeof("container-author"[0]) = 'object'::text)) OR ("container-author" IS NULL))),
     CONSTRAINT valid_editor CHECK ((((jsonb_typeof(editor) = 'array'::text) AND (jsonb_typeof(editor[0]) = 'object'::text)) OR (editor IS NULL))),
@@ -194,34 +196,6 @@ from (
     ).value
 ) as t(value)
 $_$;
-
-
---
--- Name: lastedit_now(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.lastedit_now() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-begin
-    update reading set lastedit = now() where id = new.id;
-    return new;
-end;
-$$;
-
-
---
--- Name: lastedit_now_tag(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.lastedit_now_tag() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-begin
-    update reading set lastedit = now() where id = new.entry;
-    return new;
-end;
-$$;
 
 
 --
@@ -316,21 +290,6 @@ select new.id, (get_concepts(new.notes)).*;
 return new;
 end;
 $$;
-
-
---
--- Name: preview(text); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.preview(text) RETURNS text
-    LANGUAGE sql
-    AS $_$
-select 
-    E'files:\n' ||
-    coalesce((select filepath from file where entry = $1), '') ||
-    E'\nreading note:\n' ||
-    coalesce((select notes from reading where id = $1), '');
-$_$;
 
 
 --
@@ -771,27 +730,6 @@ CREATE INDEX tag_entry_idx ON public.tag USING btree (entry);
 --
 
 CREATE INDEX tag_tag_idx ON public.tag USING btree (tag);
-
-
---
--- Name: entry lastedit_entry; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER lastedit_entry AFTER UPDATE ON public.entry FOR EACH ROW EXECUTE FUNCTION public.lastedit_now();
-
-
---
--- Name: reading lastedit_notes; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER lastedit_notes AFTER UPDATE OF notes ON public.reading FOR EACH ROW EXECUTE FUNCTION public.lastedit_now();
-
-
---
--- Name: tag lastedit_tag; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER lastedit_tag AFTER INSERT ON public.tag FOR EACH STATEMENT EXECUTE FUNCTION public.lastedit_now_tag();
 
 
 --

@@ -181,7 +181,19 @@ edit_value(char* id, char* stmtselect, char* stmtupdate, char* ext)
   }
   /* clear everything and exit function.*/
   PQclear(res);
+
+  // TODO: update lastedit
+  res = PQexecParams(conn, // TEST
+    "update reading set lastedit = now() where id = $1",
+    1,
+    NULL,
+    params_mod,
+    NULL,
+    NULL,
+    0);
+  PQclear(res);
   PQfinish(conn);
+
   return code;
 }
 
@@ -232,8 +244,6 @@ edit_file(char* filepath)
     // here: copy the content of the first file to the second.
     wait(NULL);
   }
-
-  // TODO: update lastedit
 
   return 1;
 }
