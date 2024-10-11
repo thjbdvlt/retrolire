@@ -33,7 +33,8 @@ Most commands operate on a single entry (e.g. `edit`, `cite`). Some others show 
 
 ### filters
 
-Filter options define searching criteria. They are added one to another using the logical operator `AND`. Except for `-l`, they can be used multiple times.
+Filter options define searching criteria. They are added one to another using the logical operator `AND`.
+Except for `-l`, they can be used multiple times.
 
 ```bash
 # Print entries that:
@@ -53,16 +54,14 @@ retrolire list \
 | `-c` | search a pattern in concepts | [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) |
 | `-l` | select the last edited entry ||
 
-the logical condition `-n` `--not` negates the next filter option:
+The logical condition `-n` `--not` negates the next filter option:
 
 ```bash
-# select entries that DOES NOT have the tag "_read"
+# select entries that DO NOT have the tag "_read"
 # but that DO have the tag "poetry".
 retrolire open --not --tag _read --tag poetry
 retrolire open -nt _read -t poetry
 ```
-
-| `-n` | negates the next condition (`NOT` keyword)||
 
 ![](./img/quote.gif)
 
@@ -327,3 +326,6 @@ License [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 - [ ] SQLite instead of PostgreSQL.
 - [ ] PDF annotations extraction, using [pdfannots](https://github.com/0xabu/pdfannots).
 - [ ] Vim plugin (vim script).
+- [x] option `-n` `--not`
+- [ ] option `-o` `--or`
+- [x] call commands from within fzf interface using `:` (e.g. `:delete`).
