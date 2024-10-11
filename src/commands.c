@@ -55,6 +55,10 @@ queryp2(struct Stmt* slct,
   int pick)
 {
 
+  /* add a final closing parenthese if there is at least one condition. */
+  if (cnd->total != cnd->remain)
+    append_stmt(cnd, ")");
+
   /* append the order clause to the conditional clause.*/
   append_lastedit(*cnd, lastedit);
 

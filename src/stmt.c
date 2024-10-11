@@ -115,7 +115,7 @@ cat_cnd(struct Stmt* cnd, char* s_start, char* s_end, int npar)
    *   */
   // if (!append_stmt(cnd, WHEREAND(npar)))
   //   return 0;
-  char *logical_operators[] = {"WHERE ", " AND ", " OR "};
+  char *logical_operators[] = {"WHERE (", ") AND (", " OR "};
   char *ope;
 
   if (npar == 0)

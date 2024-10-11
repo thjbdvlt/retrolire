@@ -394,6 +394,11 @@ main(int argc, char** argv)
        * that match search criterias (-v, -q, -s, -t, -i, -l).
        * the positional argument 'tags' can be used to print
        * tags altogether with other metadata. */
+
+      // add a final parenthese.
+      if (a.ncnd > 0)
+        append_stmt(&cnd, ")");
+
       append_lastedit(cnd, a.lastedit);
       if (!list(&cnd, a.npar, a.params, pos[0]))
         exit(EXIT_FAILURE);
@@ -403,6 +408,11 @@ main(int argc, char** argv)
 
     case 'j': // json
       /* 'json' command is like 'list' but in CSL-JSON format. */
+
+      // add a final parenthese.
+      if (a.ncnd > 0)
+        append_stmt(&cnd, ")");
+
       if (!json(&cnd, a.npar, a.params))
         exit(EXIT_FAILURE);
       else
@@ -414,6 +424,11 @@ main(int argc, char** argv)
        * 'protolire', which get the metadata from doi/isbn or let
        * the user edit a template, or read bibliography from file
        * and put that bibliography into the database */
+
+      // add a final parenthese.
+      if (a.ncnd > 0)
+        append_stmt(&cnd, ")");
+
       if (!command_add(pos[0], pos[1]))
         exit(EXIT_FAILURE);
       else
