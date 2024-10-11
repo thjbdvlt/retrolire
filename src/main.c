@@ -109,12 +109,15 @@ parse_opt(int key, char* arg, struct argp_state* state)
       arguments->lastedit = 2;
       break;
     case 'o': // recent
+      // TODO: rename this one. maybe S or O, or -_
       arguments->pick = 0;
       break;
 
       // TODO: 
     case 'n': // not
       break;
+
+      // TODO: -o --or
 
     case 'v': // var, e.g."author=antin", are processed later
       arguments->varvalues[arguments->nvar] = arg;
@@ -157,18 +160,22 @@ parse_opt(int key, char* arg, struct argp_state* state)
       _add_cnd(arguments, arg, "e.id = ", "::text");
       break;
 
-    case ARGP_KEY_ARG: // positional argument
-      // first positional argument is COMMAND
-      if (state->arg_num == 0) {
-        arguments->command = arg;
-      }
-
-      // there is a limit to positional arguments
-      else if (state->arg_num >= MAXPOS) {
+      /* positional argument.
+       *  - there is a limit to positional arguments (MAXPOS);
+       *  - first positional is COMMAND;
+       *  - all other go to arguments->pos;
+       *  - keep track of number of positionals (arguments-npos).
+       */
+    case ARGP_KEY_ARG:
+      // max
+      if (state->arg_num >= MAXPOS) {
         argp_usage(state);
       }
-
-      // add positional arguments
+      // command
+      else if (state->arg_num == 0) {
+        arguments->command = arg;
+      }
+      // other positional arguments
       else {
         unsigned int npos = (state->arg_num) - 1;
         arguments->pos[npos] = arg;
