@@ -240,22 +240,27 @@ main(int argc, char** argv)
   // the command for the Shell Command (pseudo-popen2). it's made of
   // an array of strings, so it will be passed as argv to execvp.
   char* pick_command[] = { "fzf",
+    /* general option for the fzf interface. */
     "--read0", // \0 as record delimiter
     "-d",
     "\\n\\t", // field delimiter
     "--tiebreak",
     "begin",
-    "-0",     // cancel if no result
+    "-0", // cancel if no result
+    /* preview
+     * (the preview command and position is set even if option -p is
+     * not used, so it can be toggled with `?`.) */
+    "--preview-window", // preview is set even without `-p`
+    preview_pos,        // from config.h
+    "--preview",
+    // TODO: a better preview shell command
+    "retrolire _previ {1} | bat -l md -p --color=always",
+    /* keybinding */
     "--bind", // keybinding to select an entry
     "enter:become(echo -n {1}),one:become(echo -n {1})",
-    "--preview-window", // preview position is set even without `-p`
-    preview_pos,        // from config.h
-    "--bind",           // preview information about an entry
-    "?:preview(retrolire _previ {1} | bat -l md -p --color=always)",
-    // test: :
-    "--bind",
-    // TODO: avoir une underscore commande retrolire qui fait ça, je
-    // dirais!
+    "--bind", // preview information about an entry
+    "?:toggle-preview",
+    "--bind", // command call using `:`, e.g. `:open`.
     "::execute(retrolire _input {1})",
     NULL,   // --exact
     NULL,   // --preview (1): --preview

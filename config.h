@@ -16,4 +16,4 @@ static const char connectioninfo[] = "dbname=retrolire";
 static char isbn_services[] = "openl wiki goob";
 
 // fzf options
-static char preview_pos[] = "right,45%";
+static char preview_pos[] = "right,45%,hidden";

@@ -325,3 +325,4 @@ License [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 - [x] option `-n` `--not`
 - [ ] option `-o` `--or`
 - [x] call commands from within fzf interface using `:` (e.g. `:delete`).
+- [ ] bash completion for author names and words in title?
