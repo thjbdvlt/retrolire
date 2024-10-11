@@ -233,5 +233,7 @@ edit_file(char* filepath)
     wait(NULL);
   }
 
+  // TODO: update lastedit
+
   return 1;
 }

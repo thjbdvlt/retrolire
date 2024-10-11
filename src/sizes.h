@@ -20,6 +20,5 @@
 #define MAX_ADD_TAGS 20
 
 /* les valeurs de la variable lastedit pour les options -l et -r. */
-#define NO_LASTEDIT 0
 #define LASTEDIT_LAST 1
 #define LASTEDIT_RECENT 2
