@@ -24,7 +24,6 @@ retrolire COMMAND [OPTIONS]
 | [tag](#tag) | edit tags attached to an entry. |
 | [update](#update) | edit the value of a field (title, translator, etc.) for an entry. |
 | [print](#print) | print information about entries (all fields, files, notes, tags). |
-| [init](#init) | init a database. |
 | [delete](#delete) | delete an entry. |
 
 Most commands operate on a single entry (e.g. `edit`, `cite`). Some others show information about many (e.g. `list`). Thus, __rétrolire__ mostly relies upon _selection_ and _filter_ mechanisms. _Filtering_ is done statically through options, while [fzf](https://github.com/junegunn/fzf) is used as the interactive _selection_ (picking) interface.
@@ -90,7 +89,7 @@ While filtering through options can use any csl variable (_title_, _translator_,
 
 ## commands
 
-Each command can be called by its complete name or by a small part of it (e.g., `ed` for `edit`). All actions (except `init` and `add`) can be used with any options.
+Each command can be called by its complete name or by a small part of it (e.g., `ed` for `edit`). All actions (except `add`) can be used with any options.
 
 ### cite
 
@@ -210,15 +209,6 @@ retrolire update "container-title" -i 'becker2013'
 
 ![](./img/update-editor.gif)
 
-### init
-
-The `init` action creates a database to store the bibliography. It takes no arguments and no options.
-
-```bash
-# (Generally, this command is run only once.)
-retrolire init
-```
-
 ## neovim integration
 
 __rétrolire__ is also a [neovim](https://neovim.io/) plugin. to install it with [lazy](https://github.com/folke/lazy.nvim), add this line to you plugins file:
@@ -285,6 +275,13 @@ sudo make install # install retrolire
 pipx install . # install some small command line python programs
 ```
 
+retrolire does not by itself create a database. you must do it by yourself (the database name must match the name set in `config.h`) and then you can just pipe the PostgreSQL schema into that empty database:
+
+```bash
+psql -c 'create database retrolire'
+retrolire _schema | psql -d retrolire
+```
+
 In addition to the executable `retrolire` (installed in /usr/bin), four other executables (python) are installed using [pipx](https://pipx.pypa.io/stable/installation/):
 
 - `jsonarray2psql`: Converts a _array_ of _objects_ json to a _table_ (PostgreSQL).
@@ -294,9 +291,7 @@ In addition to the executable `retrolire` (installed in /usr/bin), four other ex
 
 ## doi / isbn
 
-Retrieving bibliographic references from a [doi](https://dx.doi.org/) or an [isbn](https://en.wikipedia.org/wiki/International_Standard_Book_Number) is done using the program [isbntools](https://pypi.org/project/isbntools/) and [pandoc](https://pandoc.org/)[^p].
-
-[^p]: Rather than directly retrieving the csl-json with `isbn_meta`, it is better to retrieve the bibtex and transform it with pandoc. `author = {Robert Musil}` will be correctly separated into `family` and `given`, whereas with `isbn_meta ... csl`, it would be a `literal` "Robert Musil".
+Retrieving bibliographic references from a [doi](https://dx.doi.org/) or an [isbn](https://en.wikipedia.org/wiki/International_Standard_Book_Number) is done using the [isbnlib](https://pypi.org/project/isbntools/) library.
 
 ## dependencies
 
