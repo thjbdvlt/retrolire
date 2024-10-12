@@ -1,15 +1,10 @@
-# compiler and compiler options
 CC = gcc
 CCFLAGS = -I /usr/include/postgresql -L /usr/lib/ -lpq \
 		  -Wall -Wextra -Wconversion \
 		  -Wno-unused-variable -Wno-unused-parameter
-
-# where the binary and the data will be installed
 PREFIX?=/usr/local
 BINDIR=$(PREFIX)/bin
 DATADIR=/usr/share/retrolire
-
-# the path to the binary (inside the project directory)
 bin=./bin/retrolire
 
 all:
