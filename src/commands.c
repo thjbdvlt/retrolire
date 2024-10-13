@@ -764,7 +764,7 @@ command_tag_pick(char* id, char* pos[MAXPOS], int npos)
    * tags. the pipe is open in READING mode, because the current
    * function send nothing to it (tags are read from retrolire
    * _tag). */
-  FILE* f = popen("retrolire _ltags | fzf --multi "
+  FILE* f = popen("retrolire _Tag | fzf --multi "
                   " --preview=\"retrolire _cache entry ;echo {+} "
                   "| tr ' ' '\n' \""
                   " --preview-window=right,60% ",
