@@ -33,7 +33,7 @@ Most commands operate on a single entry (e.g. `edit`, `cite`). Some others show 
 ### filters
 
 Filter options define searching criteria. They are added one to another using the logical operator `AND`.
-Except for `-l`, they can be used multiple times.
+They can be used multiple times (except `-l`).
 
 ```bash
 # Print entries that:
@@ -55,10 +55,11 @@ retrolire list \
 
 there are also two options for logical operators:
 
-|short|long|description|
-|-----|----|-----------|
-| `-n`| `--not`| negates next condition|
-| `-o`| `--or`| next condition is grouped with previous one using the SQL operator `OR`|
+`-n` `--not`
+: negates next condition
+
+`-o` `--or`
+: next condition is grouped with previous one (A or B)
 
 ```bash
 # select entries that DO NOT have the tag "_read"
