@@ -41,7 +41,7 @@ They can be used multiple times .
 #   - have been published by 'amsterdam' or 'p.o.l' publisher
 retrolire list \
     --tag 'poetry' --tag 'recording' \
-    --var 'publisher.amsterdam|p\.o\.l'
+    --var 'publisher=amsterdam|p\.o\.l'
 ```
 
 | option | description | argument |
@@ -222,7 +222,7 @@ Unlike `cite`, the whole quote is output (with the citation key).
 The `open` action opens a file associated with an entry. By default, [xdg-open](https://linux.die.net/man/1/xdg-open) to define the software to use (depending on the extension), but it can be changed in the config file.
 
 ```bash
-retrolire open -v 'author.quintane' -v 'publisher.^p\.?o\.?l$'
+retrolire open -v 'author=quintane' -v 'publisher=^p\.?o\.?l$'
 ```
 ```bash
 retrolire open -t '_àlire'
@@ -284,7 +284,7 @@ retrolire print -l
 The `json` action works like `list`, but the entries are displayed in [csl-json](https://citeproc-js.readthedocs.io/en/last/csl-json/markup.html) format.
 
 ```bash
-retrolire json -v 'author.(la )?rédaction' -t 'enquête'
+retrolire json -v 'author=(la )?rédaction' -t 'enquête'
 ```
 ```json
 [
