@@ -78,20 +78,28 @@ retrolire --tag 'cool' --or --tag 'magic'
 
 ### fzf interface
 
-| option | description |
-| ------ | ----------- |
-| `-e` | no fuzzy matching |
-| `-p` | preview pane with information on the entry |
-| `-r` | order entries by last editing |
-| `-T` | show tags in picking interface |
+`-e` `--exact`
+: no fuzzy matching
+
+`-p` `--preview`
+:  preview pane with information on the entry 
+
+`-r` `--recent`
+:  order entries by last editing 
+
+`-T` `--showtags`
+: show tags in picking interface 
 
 ### misc
 
-| option | description | argument |
-| ------ | ----------- | -------- |
-| `-?` | show help |
-| `-V` | show version |
-| `-i` | select an entry by its id | id |
+`-?`
+: show help and exit
+
+`-V`
+: show version and exit
+
+`-i`
+: select an entry by its id 
 
 ## selection
 
