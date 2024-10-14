@@ -33,7 +33,7 @@ Most commands operate on a single entry (e.g. `edit`, `cite`). Some others show 
 ### filters
 
 Filter options define searching criteria. They are added one to another using the logical operator `AND`.
-They can be used multiple times (except `-l`).
+They can be used multiple times .
 
 ```bash
 # Print entries that:
@@ -51,7 +51,6 @@ retrolire list \
 | `-s` | search a pattern in reading notes | [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) |
 | `-q` | search a pattern in quotes | [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) |
 | `-c` | search a pattern in concepts | [regex](https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP) |
-| `-l` | select the last edited entry ||
 
 there are also two options for logical operators:
 
@@ -92,14 +91,17 @@ retrolire --tag 'cool' --or --tag 'magic'
 
 ### misc
 
+`-i`
+: select an entry by its id 
+
+`-l` `--last`
+: select the last edited entry 
+
 `-?`
 : show help and exit
 
 `-V`
 : show version and exit
-
-`-i`
-: select an entry by its id 
 
 ## selection
 
