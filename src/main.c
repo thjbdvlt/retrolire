@@ -272,6 +272,8 @@ main(int argc, char** argv)
     NULL,   // --exact
     NULL,   // --preview (1): --preview
     NULL,   // --preview (1b):(preview command)
+    NULL,
+    NULL,
     NULL }; // the args in execvp must be NULL-terminated
   struct ShCmd sh;
   init_sh(&sh, pick_command);

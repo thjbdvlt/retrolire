@@ -6,7 +6,6 @@
 #include <wait.h>
 
 #include "add_entries.h"
-
 #include "commands.h"
 #include "edit.h"
 #include "pgpopen2.h"
@@ -398,7 +397,7 @@ make_stmt_refer(struct Stmt* slct, struct ShCmd* sh)
   reinit_stmt(slct);
   append_stmt(slct, STMT_CONCEPT);
 
-  /* append the preview command specific to quotes.*/
+  // /* append the preview command specific to quotes.*/
   append_sh(sh, "--tiebreak");
   append_sh(sh, "begin");
   append_sh(sh, "--preview-window");
