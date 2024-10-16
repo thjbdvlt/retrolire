@@ -342,10 +342,10 @@ License [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
 ## todo / ideas
 
-- [ ] SQLite instead of PostgreSQL.
+- [ ] SQLite instead of PostgreSQL?
 - [ ] PDF annotations extraction, using [pdfannots](https://github.com/0xabu/pdfannots).
 - [ ] Vim plugin (vim script).
 - [x] option `-n` `--not`
 - [x] option `-o` `--or`
 - [x] call commands from within fzf interface using `:` (e.g. `:delete`).
-- [ ] bash completion for author names and words in title?
+- [ ] bash completion for author names (and words in titles)?
