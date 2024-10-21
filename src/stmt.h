@@ -46,6 +46,10 @@ append_stmt(struct Stmt* dest, char* source);
 int
 arrayagg(struct Stmt* s, char array[][VAL_SIZE], int n);
 
+/* add an operator before a conditional statement (WHERE/AND) */
+int
+operate_cnd(struct Stmt* cnd, int npar);
+
 /* concatenate a string as a conditional clause (WHERE/AND). */
 int
 cat_cnd(struct Stmt* cnd, char* s_start, char* s_end, int npar);

@@ -85,6 +85,26 @@ arrayagg(struct Stmt* s, char array[][VAL_SIZE], int n)
   return 1;
 }
 
+/* add a WHERE or AND conditional operator before a condional
+ * clause. */
+int
+operate_cnd(struct Stmt* cnd, int npar)
+{
+  char *logical_operators[] = {"WHERE (", ") AND (", " OR ", NULL};
+  char *ope = "";
+
+  if (npar == 0)
+    ope = logical_operators[0];
+  else if (cnd->next_or)
+    ope = logical_operators[2];
+  else
+    ope = logical_operators[1];
+
+  if (!append_stmt(cnd, ope))
+    return 0;
+  return 1;
+}
+
 /* concatenate a conditional clause to the select statement.
  * parameters:
  *  - end_cnd: a pointer to the end of the conditional clauses
@@ -113,18 +133,7 @@ cat_cnd(struct Stmt* cnd, char* s_start, char* s_end, int npar)
    *   logical operator NOT.
    * - append the condition, with the placeholder for its value.
    *   */
-  char *logical_operators[] = {"WHERE (", ") AND (", " OR ", NULL};
-  char *ope = "";
-
-  if (npar == 0)
-    ope = logical_operators[0];
-  else if (cnd->next_or)
-    ope = logical_operators[2];
-  else
-    ope = logical_operators[1];
-
-  if (!append_stmt(cnd, ope))
-    return 0;
+  operate_cnd(cnd, npar);
 
   // TODO: fix something here (uninitialize value)
   if (cnd->next_not) {

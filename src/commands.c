@@ -424,11 +424,9 @@ make_stmt_refer(struct Stmt* slct, struct ShCmd* sh)
 int
 make_stmt_open(struct Stmt* cnd, int npar)
 {
-  if (!append_stmt(cnd, WHEREAND(npar))) {
-    return 0;
-  };
+  operate_cnd(cnd, npar);
   if (!append_stmt(cnd,
-        "(select exists (select 1 from file "
+        " (select exists (select 1 from file "
         "where entry = e.id) or \"URL\" is not null)\n")) {
     return 0;
   };
