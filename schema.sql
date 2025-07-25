@@ -663,6 +663,17 @@ CREATE VIEW public.authors AS
   WHERE ((y IS NOT NULL) AND (y <> ''::text));
 
 
+-- 2025-07-25
+CREATE OR REPLACE FUNCTION public.has_author(entry, text)
+ RETURNS boolean
+ LANGUAGE sql
+AS $function$
+select
+    lower($2) in (
+        select
+            lower((jsonb_each_text(jsonb_array_elements($1.author))).value));
+$function$;
+
 --
 -- Name: concept; Type: TABLE; Schema: public; Owner: -
 --
