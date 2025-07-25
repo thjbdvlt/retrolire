@@ -38,5 +38,7 @@ $(bin): $(OBJS) $(headers)
 ../config.h: ../config.def.h
 	cp -n $< $@
 
+$(OBJS): ../config.h $(headers)
+
 clean:
 	rm -f *.o *.gch $(bin)

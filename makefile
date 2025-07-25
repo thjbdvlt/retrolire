@@ -19,7 +19,7 @@ BINDIR = $(PREFIX)/bin
 DATADIR = /usr/share/retrolire
 bin = ./bin/retrolire
 
-$(bin):
+$(bin): | bin
 	$(MAKE) -C src
 
 clean:
