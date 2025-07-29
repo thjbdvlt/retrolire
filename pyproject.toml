@@ -2,11 +2,10 @@
 name = "retrolire"
 authors = [{name="thjbdvlt"}]
 version = "0.1.0"
-description = "command line bibliography management with fzf and postgresql"
+description = "command line bibliography management with fzf and sqlite3"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "psycopg",
     "orjson",
     "pdfannots @ git+https://github.com/thjbdvlt/pdfannots",
     "pymupdf",
@@ -17,9 +16,7 @@ dependencies = [
 Homepage = "https://github.com/thjbdvlt/retrolire"
 
 [project.scripts]
-jsonarray2psql = "csl2psql.json2psql.cli:main"
 csljson-update = "csl2psql.cslminitools.cli:main"
-csl2psql = "csl2psql.cli:main"
 pdfannots = "pdfannots.cli:main"
 fetchref = "fetchref.cli:main"
 

@@ -1,0 +1,7 @@
+---
+BasedOnStyle: Mozilla
+AlignAfterOpenBracket: DontAlign
+IndentWidth: 2
+ColumnLimit: 68
+AlignEscapedNewlines: DontAlign
+---

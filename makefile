@@ -1,42 +1,20 @@
-# retrolire -- commande line bibliography manager.
-# Copyright (C) 2024,2025  thjbdvlt
-#
-# retrolire is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# retrolire is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with retrolire.  If not, see <https://www.gnu.org/licenses/>.
+# Retrolire - Command line bibliography manager
 
-PREFIX? = /usr/local
-BINDIR = $(PREFIX)/bin
-DATADIR = /usr/share/retrolire
-bin = ./bin/retrolire
+PREFIX := /usr/local/bin
+bin := bin/retrolire
+config := retrolire/internal/config/config.go
 
-$(bin): | bin
-	$(MAKE) -C src
+build: config.go
+	@CGO_ENABLED=1 go build -C retrolire -o ../$(bin)
 
-clean:
-	$(MAKE) -C src clean
+$(config): config.go
+	cp -f $< $@
 
-$(BINDIR):
-	@mkdir $(BINDIR)
+config.go:
+	cp -n $(config) $@
 
-$(DATADIR):
-	mkdir $(DATADIR)
-
-install: ./bin/retrolire $(BINDIR) $(DATADIR)
-	sudo cp $(bin) $(BINDIR)
-	cp ./bash/completion.bash ./schema.sql -r templates $(DATADIR)/
-
-uninstall:
-	sudo rm -rf $(BINDIR)/retrolire
+install: retrolire
+	cp $(bin) $(PREFIX)/retrolire
 
 install-pipx:
 	pipx install .
@@ -44,10 +22,13 @@ install-pipx:
 uninstall-pipx:
 	pipx uninstall retrolire
 
+uninstall:
+	rm -f $(PREFIX)/retrolire
+
 bin:
-	mkdir -p bin
+	mkdir -p $@
 
-.PHONY: run install uninstall install-pipx uninstall-pipx clean
+clean:
+	rm -f $(bin)
 
-run:
-	./bin/retrolire
+.PHONY: build install uninstall clean install-pipx uninstall-pipx

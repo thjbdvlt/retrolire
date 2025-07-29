@@ -17,80 +17,28 @@
 # along with retrolire.  If not, see <https://www.gnu.org/licenses/>.
 
 _retrolire(){
-    local prev opts poss suff getter
+    local cur prev opts poss suff getter
     getter=
     poss=
     suff=' '
-    filteropts="-t -v -s -q -c --tag --var --search --quote --concept"
-    opts="$filteropts -l -i -r -e -o -O -p --last --id --recent --exact --or --not --output --pager -a -A"
-    commands="edit open print quote refer add file list json cite update delete init"
-    fileopts=
+    commands='edit open add file list json cite update delete init tag-pick parse'
+    keywords='or not'
 
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
-
+    prev="${COMP_WORDS[COMP_CWORD-1]}";
     case "$prev" in
-        retrolire)
-            poss="$commands $opts"
-            ;;
-        -o | -n | --or | --not)
-            poss="$filteropts"
-            ;;
-        -v | --var)
-            getter='_fields'
-            suff='='
-            ;;
-        -t | --tag)
-            getter="_tags"
-            ;;
-        d | de | del | dele | delet | delete)
-            poss="entry file"
-            ;;
-        p | pr | pri | prin | print)
-            poss="json tags $opts"
-            ;;
-        a | ad | add)
-            poss='doi isbn template json bibtex'
-            ;;
-        doi | isbn)
-            poss=""
-            ;;
-        -a)
-            getter=_authors
-            ;;
-        template)
-            poss='article book inproceeding inbook misc software'
-            ;;
-        u | up | upd | upda | updat | update)
-            getter='_fields'
-            ;;
-        -i | --id)
-            poss=''
-            ;;
-        -r | --regex | -q | --quote | -c | --concept)
-            poss=""
-            ;;
-        -s | --search)
-            getter=_lemmes
-            ;;
-        -l | --last | -e | --exact)
-            poss="$opts"
-            ;;
-        f | fi | fil | file | json | bibtex)
-            fileopts='-o filenames -A file'
-            poss=""
-            ;;
-        *) poss="$opts"
-            ;;
+        add) poss='doi isbn json bibtex template';;
+        update) getter=_field;;
+        *)
+        cur="${COMP_WORDS[COMP_CWORD]}";
+        case "$cur" in
+            @* | author* | author:*) getter=_author; suff=" ";;
+            .*) getter=_tag; suff=" ";;
+            *) getter=_field; suff=":";;
+        esac
     esac
 
     if [ "$getter" ]
-    then {
-            dbname="$RETROLIRE_DBNAME"
-            if [ "$dbname" ]
-            then
-            poss="$(retrolire "$getter")" || poss=
-            fi
-        }
+    then poss="$(retrolire "$getter")" || poss=
     fi
 
     readarray -t poss < <(compgen -W "$poss" $fileopts -- "$2")

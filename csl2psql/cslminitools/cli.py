@@ -27,9 +27,7 @@ usage = """
 """
 
 parser = argparse.ArgumentParser(description=desc, usage=usage)
-parser.add_argument(
-    "csljson", type=argparse.FileType("r"), help=csl_desc
-)
+parser.add_argument("csljson", type=argparse.FileType("r"), help=csl_desc)
 parser.add_argument("ids", type=str, help=ids_desc)
 
 
@@ -44,7 +42,7 @@ def main():
     csl = orjson.loads(csl)
 
     # get ids
-    ids = args.ids
+    ids = args.ids.split()
     ids = map(lambda i: i.strip(), ids)
     ids = set(ids)
 
