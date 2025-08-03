@@ -129,7 +129,11 @@ func parse(t *state.State) {
 		var lastedit int64
 		check(t.Rows.Scan(&id, &lastedit))
 		ids = append(ids, id)
-		lastedits = append(lastedits, lastedit)
+		if !t.Opts.Force {
+			lastedits = append(lastedits, lastedit)
+		} else {
+			lastedits = append(lastedits, 0)
+		}
 	}
 	check(t.Rows.Close())
 	db := t.Conn()

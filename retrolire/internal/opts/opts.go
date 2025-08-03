@@ -16,6 +16,7 @@ type Opts struct {
 	TextObj     bool     // Either Quote or Concept or Line is set to true
 	TextObjName string   // "quote", "concept", "idea"
 	Fzf         []string // Addition options for FZF
+	Force       bool     // Force parsing
 }
 
 // initOpts - Initialize the flags parser
@@ -36,11 +37,11 @@ func initOpts() (*flag.FlagSet, *Opts) {
 		})
 	}
 	fs.BoolVarP(&o.KeepIDs, "keep-id", "k", false, "Don't generate new uniques entries IDs (command add)")
-	// fs.BoolVarP(&o.NoPager, "no-pager", "P", false, "No pager (command list)")
 	fs.BoolFuncP("exact", "e", "No fuzzy matching (fzf)", func(string) error {
 		o.Fzf = append(o.Fzf, "--exact")
 		return nil
 	})
+	fs.BoolVarP(&o.Force, "force", "f", false, "Parse notes even if modified time is older that last parsing (command parse)")
 	return fs, &o
 }
 

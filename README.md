@@ -62,6 +62,7 @@ retrolire add json - < mycsl.json
 |-i|--idea|Cite/Edit ideas instead of entries|
 |-k|--keep-id|Don't generate new uniques entries IDs (command add)|
 |-e|--exact|No fuzzy matching in fzf|
+|-f|--force|Force note parsing no matter files modified time (command parse)|
 
 ## CONFIG
 

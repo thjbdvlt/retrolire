@@ -62,6 +62,7 @@ OPTIONS
   -i --idea      Cite/Edit ideas instead of entries
   -k --keep-id   Don't generate new uniques entries IDs (command add)
   -e --exact     No fuzzy matching in fzf
+  -f --force     Force note parsing no matter of modified times (command parse)
 
 CONFIG
   Configuration is done through config/config.go
