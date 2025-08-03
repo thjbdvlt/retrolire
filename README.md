@@ -2,25 +2,23 @@ __retrolire__ - command line bibliography manager
 
 ## Synopsis
 
-```bash
+```text
 retrolire <command> [options] [filters]
 ```
 
 ## Commands
 
-|command|description|
-|--------|----------|
-|__edit__|Edit an entry's note|
-|__cite__|Output an entry's ID|
-|__add__|Add entries|
-|__tag__|Edit an entry's tags|
-|__list__|List entries matching criteria|
-|__json__|Output entries matching criteria in JSON|
-|__delete__|Delete an entry|
-|__update__|Update a field of an entry|
-|__init__|Initiate the database|
-|__open__|Open an entry URL|
-|__parse__|Parse notes and update database|
+__edit__: Edit an entry's note
+__cite__: Output an entry's ID
+__add__: Add entries
+__tag__: Edit an entry's tags
+__list__: List entries matching criteria
+__json__: Output entries matching criteria in JSON
+__delete__: Delete an entry
+__update__: Update a field of an entry
+__init__: Initiate the database
+__open__: Open an entry URL
+__parse__: Parse notes and update database
 
 Most commands requires no arguments, but some do:
 
@@ -31,17 +29,17 @@ retrolire update <field>
 
 ## Filters
 
-All commands except "init" and "add" accept filters arguments.
+All commands except *init* and *add* accept filters arguments.
 There are three types of filters, parsed in following order:
-· Key:Val1,Val2: "author:antin", "title:fabulous,fantastic".
-· Tag: ".poetry", ".philosophy", ".unread".
+· Key:Val1,Val2: *author:antin*, *title:fabulous,fantastic*.
+· Tag: *.poetry*, *.philosophy*, *.unread*.
 · Plain-Text search in note: anything else.
-Filters are combined with logical operator "AND".
+Filters are combined with logical operator *AND*.
 Two keywords alter this:
-· "or" replace the logical operator "AND" by "OR".
-· "not" negates the next filter.
+· *or* replace the logical operator *AND* by *OR*.
+· *not* negates the next filter.
 In your configuration file (config.go), you can define key aliases,
-so that (e.g.) "a:" is mapped to "author:" and "t:" to "title:".
+so that (e.g.) *a:* is mapped to *author:* and *t:* to *title:*.
 
 ## EXAMPLES
 
@@ -101,6 +99,9 @@ The syntax used is the syntax for [definition list](https://pandoc.org/MANUAL.ht
 
 concept
 : definition
+
+<!-- There's also a not-markdown syntax: -->
+concept = definition
 
 ```
 
