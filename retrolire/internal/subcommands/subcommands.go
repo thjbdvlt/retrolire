@@ -124,24 +124,26 @@ func update(t *state.State) {
 func tag(t *state.State) {
 	id := t.ID.Entry
 	db := t.Conn()
-	// TODO: Close database connection while editing
-	defer db.Close()
 	var tags []byte
 	var err error
 	row := db.QueryRow("select coalesce(group_concat(tag, char(10)), '') from tag where entry = $1", id)
-	err = row.Err()
-	check(err)
-	err = row.Scan(&tags)
-	check(err)
-	// TODO: Do this in a transaction
+	check(row.Err())
+	check(row.Scan(&tags))
+	check(db.Close())
 	tags = util.EditTemp(tags)
-	_, err = db.Exec("delete from tag where entry = $1", id)
+	db = t.Conn()
+	tx, err := db.Begin()
 	check(err)
-	stmt, err := db.Prepare("insert into tag (entry, tag) values (?, ?)")
+	_, err = tx.Exec("delete from tag where entry = $1", id)
+	check(err)
+	stmt, err := tx.Prepare("insert into tag (entry, tag) values (?, ?)")
 	check(err)
 	for _, i := range bytes.Split(tags, []byte{'\n'}) {
-		_, _ = stmt.Exec(id, i)
+		_, err = stmt.Exec(id, i)
+		check(err)
 	}
+	check(tx.Commit())
+	check(db.Close())
 }
 
 func tagPick(t *state.State) {
