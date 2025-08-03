@@ -26,7 +26,7 @@ const GroupID = `group by e.id`
 const CreateEntry = `CREATE TABLE IF NOT EXISTS entry (
   id text PRIMARY KEY NOT NULL,
   csl jsonb NOT NULL,
-  lastedit int DEFAULT 0,
+  lastedit int DEFAULT (unixepoch('now')),
   author text GENERATED ALWAYS AS (
     COALESCE(csl ->> '$.author[0].family', '')
   ),

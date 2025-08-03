@@ -53,6 +53,18 @@ func initDB(*state.State) {
 	check(db.Close())
 }
 
+func fromIsbnOrDoi(method string, identifier string) []byte {
+	var bufOut bytes.Buffer
+	sh := exec.Command("fetchref", method, identifier)
+	sh.Stdout = &bufOut
+	sh.Stderr = os.Stderr
+	err := sh.Run()
+	if err != nil {
+		os.Exit(1)
+	}
+	return bufOut.Bytes()
+}
+
 func add(t *state.State) {
 	popen2 := util.Popen2
 	var err error
@@ -73,16 +85,8 @@ func add(t *state.State) {
 	case "bibtex":
 		bdata = popen2(bdata, pandoc)
 	case "doi", "isbn":
-		var bufOut bytes.Buffer
-		sh := exec.Command("fetchref", method, data)
-		sh.Stdout = &bufOut
-		sh.Stderr = os.Stderr
-		err = sh.Run()
-		if err != nil {
-			os.Exit(1)
-		}
-		bdata = bufOut.Bytes()
-		bdata = popen2(bdata, pandoc)
+		bdata = popen2(fromIsbnOrDoi(method, data), pandoc)
+		bdata = util.EditTemp(bdata)
 	case "template":
 		template, ok := bibtex.GetTemplate(data)
 		if !ok {
