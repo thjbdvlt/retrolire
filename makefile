@@ -12,7 +12,7 @@ $(config): config.go
 	cp -f $< $@
 
 config.go:
-	cp -n $(config) $@
+	cp -n config.def.go $@
 
 install: retrolire
 	cp $(bin) $(PREFIX)/retrolire

@@ -4,48 +4,13 @@ package util
 import (
 	"bytes"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"retrolire/internal/config"
 )
-
-// DBNAME - Database name and options (conninfo)
-const DBNAME = ".retrolire.db?mode=rwc&cache=shared"
-
-// TAGFILE - Filename of file describing tags hierarchy
-const TAGFILE = ".retrolire.tags"
-
-// FileExists - Check if a file exists
-func FileExists(fp string) bool {
-	_, err := os.Stat(fp)
-	if err == nil {
-		return true
-	}
-	if os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
-// Dir - Get the directory from config, expanding home tilde
-func Dir() string {
-	dir := config.Directory
-	if strings.HasPrefix(dir, "~/") {
-		home, _ := os.UserHomeDir()
-		dir = filepath.Join(home, dir[2:])
-	}
-	return dir
-}
-
-// DbPath - Return database full path
-func DbPath() string {
-	return filepath.Join(Dir(), DBNAME)
-}
 
 // EditTemp - Edit value in temporary file
 func EditTemp(b []byte) []byte {
@@ -65,8 +30,9 @@ func EditTemp(b []byte) []byte {
 
 // EditFile - Edit a file with configured Editor
 func EditFile(fname string) {
+	// TODO: Return error
 	editCmd := exec.Command(config.Editor, fname)
-	editCmd.Dir = Dir()
+	editCmd.Dir = config.Directory
 	editCmd.Stdin = os.Stdin
 	editCmd.Stdout = os.Stdout
 	editCmd.Stderr = os.Stderr
@@ -76,8 +42,12 @@ func EditFile(fname string) {
 
 // EditFileLine - Edit a file with configured Editor and go at a specific line
 func EditFileLine(fname string, linenr string) {
+	// TODO: Edit a constant-defined file name / temporary file
+	// And then put it's edited content in the destination file
+	// So it's possible to use Root.OpenFile()
+	// And Root.Stat() and everything as Root.
 	editCmd := exec.Command(config.Editor, fname, config.EditorFlagLineNr, linenr)
-	editCmd.Dir = Dir()
+	editCmd.Dir = config.Directory
 	editCmd.Stdin = os.Stdin
 	editCmd.Stdout = os.Stdout
 	editCmd.Stderr = os.Stderr
@@ -86,7 +56,16 @@ func EditFileLine(fname string, linenr string) {
 }
 
 // Check - Stop program and show error if any
-func Check(err error) {
+func Check(errs... error) {
+	for _, e := range errs {
+		if e != nil {
+			log.Fatal(e)
+		}
+	}
+}
+
+// Check2 - Check the second parameter
+func Check2(_ any, err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -121,11 +100,4 @@ func Popen2(in []byte, command []string) []byte {
 	err := sh.Run()
 	Check(err)
 	return bufOut.Bytes()
-}
-
-// Root - Open a Root
-func Root() *os.Root {
-	root, err := os.OpenRoot(Dir())
-	Check(err)
-	return root
 }

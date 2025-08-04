@@ -5,7 +5,7 @@ import (
 	"errors"
 	flag "github.com/spf13/pflag"
 
-	"retrolire/internal/help"
+	"retrolire/internal/cli/help"
 	"retrolire/internal/util"
 )
 

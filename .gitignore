@@ -3,4 +3,4 @@ __pycache__
 bin
 build
 venv
-retrolire/internal/config/config.go
+config.go

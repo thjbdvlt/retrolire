@@ -1,54 +1,87 @@
-// Package state - Store results, options and program state
+// Package state - Store program state and manage database connection
 package state
 
 import (
 	"database/sql"
+	"fmt"
+	"log"
+	"os"
 
-	"retrolire/internal/opts"
-	"retrolire/internal/util"
+	_ "github.com/mattn/go-sqlite3"
+
+	"retrolire/internal/config"
+	"retrolire/internal/fs"
 )
 
-// State - Store options and results
+// Connector - Something that can connect or reconnect to the database
+type Connector interface{ Conn() *sql.DB }
+
+// State - Main program state, mostly used to (re)connect to the database
 type State struct {
-	dbChecked bool       // DB has already been checked
-	Opts      *opts.Opts // Parameters for query
-	Rows      *sql.Rows  // Result from Query
-	ID        ID         // Parsed result from FZF
-	FzfResult string     // Raw result from fzf
-	Args      Args       // Positional arguments
+	dbChecked bool
+	Logger    *log.Logger
 }
 
-// Args - Positional arguments
-type Args struct {
-	Filters []string // Generic filters arguments
-	Fn      []string // Arguments processed by the post-query function
-	Query   []any    // Command-specific arguments passed as parameters to the query
-}
-
-// Conn - Connect to the database
-func (t *State) Conn() *sql.DB {
-	path := util.DbPath()
-	db, err := sql.Open("sqlite3", path)
+// Conn - Connect to the database. This function calls log.Fatal if connection fails.
+func (s *State) Conn() *sql.DB {
+	err := os.Chdir(config.Directory)
 	if err != nil {
-		util.Abort("Error opening database", path)
+		fmt.Println("Cannot open directory:", config.Directory)
+		os.Exit(1)
+	}
+	db, err := sql.Open("sqlite3", fs.DBNAME)
+	if err != nil {
+		fmt.Println("Error opening database in directory", config.Directory)
+		os.Exit(1)
 	}
 	// Fix slow note parsing and 'database is locked'
 	_, err = db.Exec("PRAGMA synchronous = OFF")
-	util.Check(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 	// See https://github.com/mattn/go-sqlite3/issues/569
 	_, err = db.Exec("PRAGMA journal_mode = WAL")
-	util.Check(err)
-	if !t.dbChecked {
-		t.dbChecked = true
+	s.Log(err, err)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if !s.dbChecked {
+		s.dbChecked = true
 		// Check that the table ENTRY exists.
 		// If it doesn't, it's likely that the database doesn't exist at all.
 		_, err := db.Exec("select id, csl, lastedit from entry limit 0")
 		if err != nil {
-			util.Abort(
-				"Looks like this database doesn't exists: ", path,
+			fmt.Println(
+				"Looks like there's no retrolire database in this directory: ",
+				config.Directory,
 				"\nYou should call `retrolire init` to create the database.",
 			)
+			os.Exit(1)
 		}
 	}
 	return db
+}
+
+func (s *State) initLogger() {
+	f, err := os.OpenFile(fs.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+	if err != nil {
+		panic(err)
+	}
+	s.Logger = log.New(f, "", log.Ldate|log.Ltime)
+}
+
+func (s *State) log(errs []error) {
+	if s.Logger == nil {
+		s.initLogger()
+	}
+	for _, e := range errs {
+		if e != nil {
+			s.Logger.Println(e)
+		}
+	}
+}
+
+// Log - Log things to the log file
+func (s *State) Log(err ...error) {
+	s.log(err)
 }
