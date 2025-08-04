@@ -67,6 +67,12 @@ const CreateTag = `create table if not exists tag (
   tag text not null
 )`
 
+// CreatTagDef - Create the tagdef table, used to define relations between tags
+const CreatTagDef = `create table if not exists tagDef (
+  tag text,
+  isA text
+)`
+
 // SelectTagOrderByUse - Get tags, most used first
 const SelectTagOrderByUse = `with x as (
   select tag, count(distinct entry) as count

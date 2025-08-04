@@ -77,8 +77,7 @@ func Parse(ids []string, lastedits []int64, db *sql.DB) {
 	var rePage = regexp.MustCompile(`\((\d+)\)[.,;:]?$`)
 	var reExclude = regexp.MustCompile(`^[^a-zA-Z]*$`)
 	// Run the whole function in Root for safety
-	root, err := os.OpenRoot(util.Dir())
-	check(err)
+	root := util.Root()
 	update := make([]bool, len(ids))
 	// Delete from textobjs before re-inserting
 	stmtDelete, err := db.Prepare("delete from textobj where entry = ?")

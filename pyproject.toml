@@ -16,7 +16,7 @@ dependencies = [
 Homepage = "https://github.com/thjbdvlt/retrolire"
 
 [project.scripts]
-csljson-update = "csl2psql.cslminitools.cli:main"
+csljson-update = "csljson_update.cli:main"
 pdfannots = "pdfannots.cli:main"
 fetchref = "fetchref.cli:main"
 

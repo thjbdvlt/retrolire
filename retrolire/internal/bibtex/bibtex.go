@@ -7,19 +7,19 @@ import (
 	"strings"
 )
 
-var book = []byte(`@book{_,
-  address = {},
-  author = {},
-  isbn = {},
-  language = {},
-  publisher = {},
-  series = {},
-  title = {},
-  translator = {},
-  year = {},
-  origyear = {}
-}`)
-var chapter = []byte(`@inbook{_,
+const book = `@book{_,
+	address = {},
+	author = {},
+	isbn = {},
+	language = {},
+	publisher = {},
+	series = {},
+	title = {},
+	translator = {},
+	year = {},
+	origyear = {}
+}`
+const chapter = `@inbook{_,
   address = {},
   author = {},
   editor = {},
@@ -30,8 +30,8 @@ var chapter = []byte(`@inbook{_,
   title = {},
   year = {},
   origyear = {}
-}`)
-var article = []byte(`@article{_,
+}`
+const article = `@article{_,
   author = {},
   title = {},
   year = {},
@@ -43,8 +43,8 @@ var article = []byte(`@article{_,
   url = {},
   urldate = {},
   publisher = {}
-}`)
-var web = []byte(`@misc{_,
+}`
+const web = `@misc{_,
   author = {},
   title = {},
   publisher = {},
@@ -52,8 +52,8 @@ var web = []byte(`@misc{_,
   urldate = {},
   year = {},
   origyear = {}
-}`)
-var inproceeding = []byte(`@inproceedings{_,
+}`
+const inproceeding = `@inproceedings{_,
   address = {},
   author = {},
   booktitle = {},
@@ -63,31 +63,29 @@ var inproceeding = []byte(`@inproceedings{_,
   title = {},
   year = {},
   origyear = {}
-}`)
-var software = []byte(`@software{_,
+}`
+const software = `@software{_,
   author = {},
   title = {},
   url = {},
   version = {},
   date = {}
-}`)
-
-type template struct {
-	name   string
-	bibtex []byte
-}
-
-var templates = []template{
-	{"article", article},
-	{"book", book},
-	{"web", web},
-	{"chapter", chapter},
-	{"software", software},
-	{"inproceeding", inproceeding},
-}
+}`
 
 // GetTemplate - Get BibTex template by name
 func GetTemplate(templateName string) (tpl []byte, ok bool) {
+	type template struct {
+		name   string
+		bibtex []byte
+	}
+	var templates = []template{
+		{"article", []byte(article)},
+		{"book", []byte(book)},
+		{"web", []byte(web)},
+		{"chapter", []byte(chapter)},
+		{"software", []byte(software)},
+		{"inproceeding", []byte(inproceeding)},
+	}
 	if templateName != "" {
 		for _, i := range templates {
 			if strings.HasPrefix(i.name, templateName) {

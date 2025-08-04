@@ -139,8 +139,11 @@ func tag(t *state.State) {
 	stmt, err := tx.Prepare("insert into tag (entry, tag) values (?, ?)")
 	check(err)
 	for _, i := range bytes.Split(tags, []byte{'\n'}) {
-		_, err = stmt.Exec(id, i)
-		check(err)
+		i = bytes.TrimSpace(i)
+		if len(i) > 0 {
+			_, err = stmt.Exec(id, string(i)) // It's important to convert to string!
+			check(err)
+		}
 	}
 	check(tx.Commit())
 	check(db.Close())

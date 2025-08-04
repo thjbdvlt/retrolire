@@ -1,3 +1,4 @@
+// Package util - Utilities functions
 package util
 
 import (
@@ -114,4 +115,11 @@ func Popen2(in []byte, command []string) []byte {
 	err := sh.Run()
 	Check(err)
 	return bufOut.Bytes()
+}
+
+// Root - Open a Root
+func Root() *os.Root {
+	root, err := os.OpenRoot(Dir())
+	Check(err)
+	return root
 }

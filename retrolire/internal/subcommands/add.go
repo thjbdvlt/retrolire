@@ -4,10 +4,12 @@ package subcommands
 
 import (
 	"bytes"
+	"strings"
 	"database/sql"
 	"fmt"
 	"os"
 	"os/exec"
+	"bufio"
 
 	"retrolire/internal/bibtex"
 	"retrolire/internal/note"
@@ -121,6 +123,7 @@ from x`, string(bdata))
 }
 
 func parse(t *state.State) {
+	// Parse notes matching filters
 	var ids []string
 	var lastedits []int64
 	check(t.Rows.Err())
@@ -138,5 +141,77 @@ func parse(t *state.State) {
 	check(t.Rows.Close())
 	db := t.Conn()
 	note.Parse(ids, lastedits, db)
+	check(db.Close())
+	// Parse and update tags
+	parseTags(t)
+}
+
+// getIndent - Get indent length
+func getIndent(b string) int {
+	for i, v := range b {
+		if v != ' ' {
+			return i
+		}
+	}
+	return 0
+}
+
+// tagDef - A tag description
+type tagDef struct {
+	name    string
+	tree    []string
+	aliases []string
+}
+
+func parseTags(t *state.State) {
+	// Open the tag file
+	root := util.Root()
+	file, err := root.Open(".retrolire.tags")
+	check(err)
+	check(root.Close())
+	// Two slices to store line contents and indent levels
+	lines := []string{}
+	indents := []int{}
+	// Iterate over the tag file lines. Each line defines a tag
+	scanner := bufio.NewScanner(file)
+	var prevIndent int
+	var maxIndent int
+	n := 0
+	for scanner.Scan() {
+		line := scanner.Text()
+		indent := getIndent(line) // Indent = hierarchy depth
+		// Cap the indent difference to one
+		if indent > prevIndent+1 {
+			indent = prevIndent + 1
+		}
+		// Increase maxIndent, needed to build the tree slice
+		if indent > maxIndent {
+			maxIndent = indent
+		}
+		prevIndent = indent
+		lines = append(lines, strings.TrimSpace(line))
+		indents = append(indents, indent)
+		n++
+	}
+	tree := make([]string, maxIndent+1) // Store tag hierarchy
+	// Delete the tagDef table that describe the tag hierarchy
+	db := t.Conn()
+	tx, err := db.Begin()
+	check(err)
+	_, err = tx.Exec("delete from tagDef")
+	check(err)
+	// Re-Create the hierarchy
+	stmt, err := tx.Prepare("insert into tagDef (tag, isA) values (?, ?)")
+	check(err)
+	for i, line := range lines {
+		// TODO: Aliases
+		indent := indents[i]
+		tree[indent] = line
+		for y := 0; y <= indent; y++ {
+			_, err = stmt.Exec(line, tree[y])
+			check(err)
+		}
+	}
+	check(tx.Commit())
 	check(db.Close())
 }
