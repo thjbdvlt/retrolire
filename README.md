@@ -22,7 +22,7 @@ __parse__: Parse notes and update database
 
 Most commands requires no arguments, but some do:
 
-```bash
+```text
 retrolire add {doi|isbn|bibtex|json|template} <identifier|file>
 retrolire update <field>
 ```
@@ -31,17 +31,21 @@ retrolire update <field>
 
 All commands except *init* and *add* accept filters arguments.
 There are three types of filters, parsed in following order:
-· Key:Val1,Val2: *author:antin*, *title:fabulous,fantastic*.
-· Tag: *.poetry*, *.philosophy*, *.unread*.
-· Plain-Text search in note: anything else.
-Filters are combined with logical operator *AND*.
-Two keywords alter this:
-· *or* replace the logical operator *AND* by *OR*.
-· *not* negates the next filter.
-In your configuration file (config.go), you can define key aliases,
-so that (e.g.) *a:* is mapped to *author:* and *t:* to *title:*.
 
-## EXAMPLES
+- Key:Val1,Val2: `author:antin`, `title:fabulous,fantastic`
+- Tag: `.poetry`, `.philosophy`, `.unread`
+- Author: `@wittgenstein`, `@quintane`
+- Plain-Text search in note: anything else
+
+Filters are combined with logical operator *AND*. Two keywords alter this:
+
+- `or` replace the logical operator *AND* by *OR*.
+- `not` negates the next filter.
+
+In your configuration file (config.go), you can define key aliases,
+so that (e.g.) `a:` is mapped to `author:` and `t:` to `title:`.
+
+## Examples
 
 ```bash
 retrolire init
@@ -53,7 +57,7 @@ retrolire update title
 retrolire add json - < mycsl.json
 ```
 
-## OPTIONS
+## Options
 
 |short|long|description|
 |---|--------|---------|
@@ -64,10 +68,32 @@ retrolire add json - < mycsl.json
 |-e|--exact|No fuzzy matching in fzf|
 |-f|--force|Force note parsing no matter files modified time (command parse)|
 
-## CONFIG
+## Implicit tags
 
-Configuration is done through config/config.go
-Thus, yo need to compile the software in order to changes to apply.
+The file `.retrolire.tags` in your bibliography directory describe tags hierarchy (through indentation) and aliases (with sign `=`):
+
+```text
+fiction
+ science-fiction = sf
+ romance
+ fantasy
+humanities
+ digital-humanities = dh
+ philosophy = philo
+  philosophy-of-mind
+  philosophy-of-language
+ social-sciences
+  sociology
+  anthropology
+computing
+ minimal-computing
+ linux
+ databases = db
+  sql
+   sqlite
+```
+
+With this file, tag *sf* will behave just like *science-fiction*, and if you add tag *sf* to an entry, it will considered to have the tag *fiction* as well.
 
 ## Notes parsing
 
@@ -106,11 +132,7 @@ concept = definition
 
 ```
 
-## completion (bash)
-
-The completion script (bash) allows for automatic completion of __actions__, __options__, tags, and fields (variables). To use it, source it e.g. in your `.bashrc`.
-
-## installation
+## Installation
 
 ```bash
 git clone https://github.com/thjbdvlt/retrolire retrolire
@@ -130,7 +152,7 @@ In addition to the executable `retrolire` (installed in /usr/bin), four other ex
 - `csljson-update`: Builds unique _ids_ for a csl-json.
 - `fetchref`: Get a bibtex reference from a DOI or ISBN.
 
-### cite
+### Cite
 
 Command `cite` is used to get the __ID__ (citation key) of an entry, for example, to be inserted in a [pandoc](https://pandoc.org/)-markdown document for which footnotes and bibliography will be automatically produced with [citeproc](https://github.com/jgm/citeproc).
 
@@ -138,11 +160,11 @@ Command `cite` is used to get the __ID__ (citation key) of an entry, for example
 retrolire cite | xclip -selection clipboard
 ```
 
-### edit
+### Edit
 
 Edit the reading note of an entry with the program defined as the `editor` (in `config.go`).
 
-### open
+### Open
 
 The `open` action opens an URL associated with an entry. By default, [xdg-open](https://linux.die.net/man/1/xdg-open) to define the software to use (depending on the extension), but it can be changed in the config file.
 
@@ -163,12 +185,11 @@ The `file` action adds a __file__ to an entry. It takes the file path as an argu
 retrolire add file './la_maison_de_wittgenstein.pdf' -i 'cometti2017'
 ```
 -->
-
-### tag
+### Tag
 
 The `tag` action edits (in the `$EDITOR`) the tags associated to an entry. It takes an optional argument `pick` that allows selecting (with fzf) tags from the tags already used.
 
-### add
+### Add
 
 The `add` action adds bibliographic entries from a [bibtex](https://www.bibtex.org/) or [csl-json](https://citeproc-js.readthedocs.io/en/last/csl-json/markup.html) file, or a single one from a [doi](https://dx.doi.org/), an [isbn](https://en.wikipedia.org/wiki/International_Standard_Book_Number), or a template to fill.
 
@@ -195,7 +216,7 @@ retrolire add template book
 (The filter options are ignored.)
 
 
-### list
+### List
 
 The `list` action shows the information of the chosen bibliography entries. (If no filter option is selected, it displays the entire bibliography. Unlike other options that use filters, there is no _selection_ of an entry with fzf: the `list` command displays all entries that match the filters.)
 
@@ -203,7 +224,7 @@ The `list` action shows the information of the chosen bibliography entries. (If 
 retrolire list author:antin
 ```
 
-### json
+### JSON
 
 The `json` action works like `list`, but the entries are displayed in [csl-json](https://citeproc-js.readthedocs.io/en/last/csl-json/markup.html) format.
 
@@ -224,7 +245,7 @@ retrolire json author:rédaction .inquiry
 ]
 ```
 
-### update
+### Update
 
 The `update` action modifies the value of a field (_title_, _publisher_, etc.). It requires an argument (_field_): the field whose value needs to be updated. The second argument (_value_) is optional: if absent, the current value will be opened in the `$EDITOR` to be modified directly; if provided, it is used as the new value.
 
@@ -235,6 +256,15 @@ retrolire update container-title id:becker2013
 ## DOI / ISBN
 
 Retrieving bibliographic references from a [doi](https://dx.doi.org/) or an [isbn](https://en.wikipedia.org/wiki/International_Standard_Book_Number) is done using the [isbnlib](https://pypi.org/project/isbntools/) library.
+
+## Config
+
+Configuration is done through config/config.go
+Thus, yo need to compile the software in order to changes to apply.
+
+## Completion (Bash)
+
+The completion script (bash) allows for automatic completion of __actions__, __options__, tags, and fields (variables). To use it, source it e.g. in your `.bashrc`.
 
 ## dependencies
 

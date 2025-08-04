@@ -122,6 +122,7 @@ func update(t *state.State) {
 }
 
 func tag(t *state.State) {
+	// TODO: Don't edit implicit tags, but refresh after that
 	id := t.ID.Entry
 	db := t.Conn()
 	var tags []byte
