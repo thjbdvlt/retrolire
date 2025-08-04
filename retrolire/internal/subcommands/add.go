@@ -41,11 +41,14 @@ func initDB(*state.State) {
 		statements.CreateEntry,
 		statements.CreateTextObj,
 		statements.CreateTag,
+		statements.CreateTagDef,
 		`create index entry_id on entry(id)`,
 		`create index textobj_entry on textobj(entry)`,
 		`create index textobj_class on textobj(class)`,
 		`create index tag_entry on tag(entry)`,
 		`create index tag_tag on tag(tag)`,
+		`create index tagDef_tag on tagDef(tag)`,
+		`create index tagDef_isA on tagDef(isA)`,
 	}
 	for _, i := range stmts {
 		_, err = tx.Exec(i)

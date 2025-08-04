@@ -67,8 +67,8 @@ const CreateTag = `create table if not exists tag (
   tag text not null
 )`
 
-// CreatTagDef - Create the tagdef table, used to define relations between tags
-const CreatTagDef = `create table if not exists tagDef (
+// CreateTagDef - Create the tagdef table, used to define relations between tags
+const CreateTagDef = `create table if not exists tagDef (
   tag text,
   isA text
 )`
