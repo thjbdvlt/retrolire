@@ -1,0 +1,31 @@
+humanities
+ social-science
+  sociology
+   sociology*
+  anthropology
+   anthropology*
+ philosophy 
+  philosophy-of-science
+  philosophy-of-language
+ digital-humanities
+  distant-reading
+art
+ poetry
+  contemporary-poetry
+  conceptual-writing
+ visual-art
+  painting
+  sculpture
+  drawing
+  contemporary-art
+  conceptual-art
+ art-history
+computing
+ foss
+  linux
+ minimal-computing
+ databases
+.read
+ .forgetted
+.unread
+ .toread
