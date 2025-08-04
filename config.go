@@ -40,6 +40,11 @@ var AliasesCSL = map[string]string{
 	"ct": "container-title",
 }
 
+// AliasesTag - Aliases for tags
+var AliasesTag = map[string]string{
+	"ph": "philosophy",
+}
+
 // FilterFieldValueSep - String used to delimit FIELD/VALUE, e.g. "author:antin"
 const FilterFieldValueSep = ":"
 
