@@ -2,6 +2,7 @@
 package util
 
 import (
+	"bytes"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
@@ -9,10 +10,15 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"bytes"
 
 	"retrolire/internal/config"
 )
+
+// DBNAME - Database name and options (conninfo)
+const DBNAME = ".retrolire.db?mode=rwc&cache=shared"
+
+// TAGFILE - Filename of file describing tags hierarchy
+const TAGFILE = ".retrolire.tags"
 
 // FileExists - Check if a file exists
 func FileExists(fp string) bool {
@@ -38,7 +44,7 @@ func Dir() string {
 
 // DbPath - Return database full path
 func DbPath() string {
-	return filepath.Join(Dir(), ".retrolire.db?mode=rwc&cache=shared")
+	return filepath.Join(Dir(), DBNAME)
 }
 
 // EditTemp - Edit value in temporary file

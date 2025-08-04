@@ -44,17 +44,11 @@ func filterAuthor(s string, _ *opts.Opts) (clause string, params []any) {
 	return clause, params
 }
 
-const selectTag = `(EXISTS (
-  SELECT 1 FROM tag t join tagDef td on td.tag = t.tag WHERE t.entry = e.id AND td.isA = ?
-) OR (
-  SELECT 1 FROM tag WHERE entry = e.id AND tag = ?
-))`
-
 func filterTag(s string, _ *opts.Opts) (clause string, params []any) {
 	const tagPrefixLen = len(config.FilterTagPrefix)
 	idx := strings.Index(s, config.FilterTagPrefix)
 	if idx == 0 {
-		clause = selectTag
+		clause = `EXISTS (SELECT 1 FROM tag WHERE entry = e.id AND tag = ?)`
 		p := s[tagPrefixLen:]
 		params = []any{p, p}
 	}

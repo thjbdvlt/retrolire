@@ -28,9 +28,8 @@ var AliasesCommand = map[string]string{
 	"ci": "cite",
 	"up": "update",
 	"ad": "add",
-	"a": "add",
+	"a":  "add",
 }
-
 
 // AliasesCSL - Aliases to CSL variable, e.g. "author", "container-title"
 var AliasesCSL = map[string]string{
@@ -38,11 +37,6 @@ var AliasesCSL = map[string]string{
 	"t":  "title",
 	"ca": "container-author",
 	"ct": "container-title",
-}
-
-// AliasesTag - Aliases for tags
-var AliasesTag = map[string]string{
-	"ph": "philosophy",
 }
 
 // FilterFieldValueSep - String used to delimit FIELD/VALUE, e.g. "author:antin"

@@ -3,13 +3,13 @@
 package subcommands
 
 import (
+	"bufio"
 	"bytes"
-	"strings"
 	"database/sql"
 	"fmt"
 	"os"
 	"os/exec"
-	"bufio"
+	"strings"
 
 	"retrolire/internal/bibtex"
 	"retrolire/internal/note"
@@ -159,17 +159,30 @@ func getIndent(b string) int {
 	return 0
 }
 
-// tagDef - A tag description
-type tagDef struct {
-	name    string
-	tree    []string
-	aliases []string
+const insertTagRef = `INSERT INTO tagDef (tag, isA) VALUES (?, ?)`
+const deleteTagRef = `DELETE FROM tagDef`
+const deleteImplicitTags = `DELETE FROM tag WHERE implicit = true`
+const insertImplicitTags = `INSERT INTO tag (entry, tag, implicit)
+SELECT distinct t.entry, td.isA, true
+FROM tag t
+JOIN tagDef td ON t.tag = td.tag`
+
+func updateImplicitTags(t *state.State) {
+	db := t.Conn()
+	tx, err := db.Begin()
+	check(err)
+	_, err = tx.Exec(deleteImplicitTags)
+	check(err)
+	_, err = tx.Exec(insertImplicitTags)
+	check(err)
+	check(tx.Commit())
+	check(db.Close())
 }
 
 func parseTags(t *state.State) {
 	// Open the tag file
 	root := util.Root()
-	file, err := root.Open(".retrolire.tags")
+	file, err := root.Open(util.TAGFILE)
 	check(err)
 	check(root.Close())
 	// Two slices to store line contents and indent levels
@@ -201,20 +214,33 @@ func parseTags(t *state.State) {
 	db := t.Conn()
 	tx, err := db.Begin()
 	check(err)
-	_, err = tx.Exec("delete from tagDef")
+	_, err = tx.Exec(deleteTagRef)
 	check(err)
 	// Re-Create the hierarchy
-	stmt, err := tx.Prepare("insert into tagDef (tag, isA) values (?, ?)")
+	stmt, err := tx.Prepare(insertTagRef)
 	check(err)
 	for i, line := range lines {
-		// TODO: Aliases
+		// Aliases
+		if strings.Contains(line, "=") {
+			s := strings.Split(line, "=")
+			if len(s) > 1 {
+				name := strings.TrimSpace(s[0])
+				for _, alias := range s[1:] {
+					_, err = stmt.Exec(name, strings.TrimSpace(alias))
+					check(err)
+				}
+				line = name // Remove aliases for hierarchy
+			}
+		}
+		// Hierarchy
 		indent := indents[i]
 		tree[indent] = line
-		for y := 0; y <= indent; y++ {
+		for y := 0; y < indent; y++ {
 			_, err = stmt.Exec(line, tree[y])
 			check(err)
 		}
 	}
 	check(tx.Commit())
 	check(db.Close())
+	updateImplicitTags(t)
 }

@@ -64,13 +64,20 @@ const CreateTextObj = `CREATE TABLE IF NOT EXISTS textobj (
 // CreateTag - Create tag table
 const CreateTag = `create table if not exists tag (
   entry text references entry(id),
-  tag text not null
+  tag text not null,
+  implicit bool default false not null
 )`
 
 // CreateTagDef - Create the tagdef table, used to define relations between tags
 const CreateTagDef = `create table if not exists tagDef (
   tag text,
   isA text
+)`
+
+// CreateTagAlias - Create the tagAliat table
+const CreateTagAlias = `create table if not exists tagAlias (
+  tag text,
+  alias text
 )`
 
 // SelectTagOrderByUse - Get tags, most used first

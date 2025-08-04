@@ -238,7 +238,8 @@ Retrieving bibliographic references from a [doi](https://dx.doi.org/) or an [isb
 
 ## dependencies
 
-- Sqlite3
+- Go
+- SQLite3
 - [fzf](https://github.com/junegunn/fzf).
 
 For the importation to the database in the python command line tools:
