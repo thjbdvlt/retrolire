@@ -24,7 +24,7 @@ func FromConfig() Styles {
 	var stylesID = make([]tcell.Style, obj.N)
 	var stylesMain = make([]tcell.Style, obj.N)
 	type styleItem struct {
-		obj  obj.Obj
+		obj  obj.Class
 		id   string
 		main string
 	}

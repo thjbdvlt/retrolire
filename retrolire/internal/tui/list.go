@@ -14,7 +14,7 @@ import (
 )
 
 type thing struct {
-	class obj.Obj
+	class obj.Class
 	line  int
 	id    string
 	main  string
@@ -39,7 +39,7 @@ type catalogue struct {
 func putText(text string, screen tcell.Screen, x, y, width int, style tcell.Style) int {
 	for _, r := range text {
 		x++
-		if x >= width {
+		if x > width {
 			break
 		}
 		screen.SetContent(x, y, r, nil, style)
@@ -133,7 +133,7 @@ func (c *catalogue) RemoveItem(index int) *catalogue {
 }
 
 // InsertItem - Insert an item. If index is -1, append to the end of the inventory.
-func (c *catalogue) InsertItem(index int, id, main, least string, class obj.Obj) *catalogue {
+func (c *catalogue) InsertItem(index int, id, main, least string, class obj.Class) *catalogue {
 	item := &thing{
 		id:    id,
 		main:  main,
@@ -204,7 +204,7 @@ func (c *catalogue) Draw(screen tcell.Screen) {
 	}
 }
 
-func fromSlice(s []string, class obj.Obj) []*thing {
+func fromSlice(s []string, class obj.Class) []*thing {
 	var items []*thing
 	for _, i := range s {
 		items = append(items, &thing{
@@ -260,14 +260,18 @@ func filterItems(items []*thing, search string) []*thing {
 }
 
 func (c *catalogue) item(index int) *thing {
-	if index >= len(c.items) {
-		return nil
+	if len(c.items) == 0 || index >= len(c.items) {
+		return &thing{}
 	}
 	return c.items[index]
 }
 
 func (c *catalogue) current() *thing {
-	return c.item(c.GetCurrentItem())
+	cur := c.GetCurrentItem()
+	if cur >= len(c.items) {
+		return &thing{}
+	}
+	return c.item(cur)
 }
 
 func (ui *UI) display(items []*thing) {

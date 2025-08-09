@@ -32,9 +32,10 @@ func InitApp(t *state.State) {
 		PrimaryTextColor:         tcell.ColorBlack,
 	}
 	ui := &UI{
-		App:    tview.NewApplication(),
-		State:  t,
-		styles: style.FromConfig(),
+		App:     tview.NewApplication(),
+		State:   t,
+		styles:  style.FromConfig(),
+		history: initHistory(),
 	}
 	ui.App.SetTitle("retrolire")
 	initStatusBar(ui)
@@ -85,7 +86,7 @@ func initCatalogue(ui *UI) {
 
 func buildGrids(ui *UI) {
 	ui.Grid = tview.NewGrid()
-	ui.Grid.SetColumns(0).SetRows(1, 1, 0, 4).SetBorders(false)
+	ui.Grid.SetColumns(0).SetRows(1, 1, 0, 6).SetBorders(false)
 	ui.bar.Grid = tview.NewGrid().SetColumns(0, 0).SetBorders(false)
 	ui.catalogue.Grid = tview.NewGrid()
 	ui.catalogue.Grid.SetColumns(1, 0).SetBorder(false)

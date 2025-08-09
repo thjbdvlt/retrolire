@@ -3,6 +3,7 @@ package util
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
@@ -11,6 +12,22 @@ import (
 
 	"retrolire/internal/config"
 )
+
+func GetSomethingAsSlice(db *sql.DB, stmt string) ([]string, error) {
+	rows, err := db.Query(stmt)
+	if err != nil {
+		return []string{}, err
+	} else if err = rows.Err(); err != nil {
+		return []string{}, err
+	}
+	var things []string
+	for rows.Next() {
+		var t string
+		Check(rows.Scan(&t))
+		things = append(things, t)
+	}
+	return things, nil
+}
 
 // EditTemp - Edit value in temporary file
 func EditTemp(b []byte) []byte {
@@ -56,7 +73,7 @@ func EditFileLine(fname string, linenr string) {
 }
 
 // Check - Stop program and show error if any
-func Check(errs... error) {
+func Check(errs ...error) {
 	for _, e := range errs {
 		if e != nil {
 			log.Fatal(e)

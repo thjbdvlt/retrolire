@@ -4,8 +4,10 @@ PREFIX := /usr/local/bin
 bin := bin/retrolire
 config := retrolire/internal/config/config.go
 
+
 build: $(config) | bin
-	@CGO_ENABLED=1 go build -C retrolire -o ../$(bin)
+	@# With --tags fts5 the first build will be long. Nexts will be faster.
+	@CGO_ENABLED=1 go build -C retrolire --tags fts5 -o ../$(bin) #--tags sqlite_vtable
 
 $(config): config.go
 	mkdir -p $(@D)

@@ -169,3 +169,37 @@ func TuiStmtOrderBy() *SelectStmt {
 	st.orderBy = `ORDER BY class, length(main)`
 	return st
 }
+
+// TuiStmtFTS - Select statement for TFS5
+func TuiStmtFTS() *SelectStmt {
+	return &SelectStmt{
+		// TODO: Don't match again class / line / id
+		stmt:            `
+SELECT e.id, e.line, e.main, e.least, e.class FROM obj e
+JOIN fts f ON f.id = e.id AND e.line = f.line
+		`,
+		NRequiredParams: 1,
+		clauses:         []string{"WHERE", "fts MATCH ?"},
+		orderBy:         "ORDER BY RANK",
+	}
+}
+
+// TuiStmtCosine - Word vectors ranking statement
+func TuiStmtCosine() *SelectStmt {
+	return &SelectStmt{
+		stmt:            `SELECT e.id, e.line, e.main, e.least as least, class from obj e`,
+		clauses:         []string{"WHERE", "vec IS NOT NULL"},
+		orderBy:         `ORDER BY vec_distance_cosine(e.vec, ?)`,
+		NRequiredParams: 1,
+	}
+}
+
+// TuiStmtL2 - Word vectors ranking statement
+func TuiStmtL2() *SelectStmt {
+	return &SelectStmt{
+		stmt:            `SELECT e.id, e.line, e.main, e.least as least, class from obj e`,
+		clauses:         []string{"WHERE", "vec IS NOT NULL"},
+		orderBy:         `ORDER BY vec_distance_L2(e.vec, ?)`,
+		NRequiredParams: 1,
+	}
+}

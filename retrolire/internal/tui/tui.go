@@ -10,7 +10,6 @@ import (
 	"retrolire/internal/actions"
 	"retrolire/internal/config"
 	"retrolire/internal/obj"
-	"retrolire/internal/sqlmaker"
 	"retrolire/internal/state"
 	"retrolire/internal/tui/style"
 	"retrolire/internal/util"
@@ -28,23 +27,28 @@ type UI struct {
 	bar
 	*catalogue
 	*state.State
+	*history
 }
 
-func (ui *UI) displayFromFilters(text string) {
-	filters := strings.Split(text, " ")
-	ui.stock = getEntriesFromFilters(ui, filters)
-	ui.display(ui.stock)
-	ui.Filters.SetText(text)
+const magicPrefixCosine = '*'
+const magicPrefixTFS = '&'
+
+func (ui *UI) displayFromText(text string) {
+	text = strings.TrimSpace(text)
+	if len(text) == 0 {
+		return
+	}
+	switch text[0] {
+	case magicPrefixTFS:
+		ui.findFts(text[1:])
+	case magicPrefixCosine:
+		ui.findSimilar(text[1:])
+	default:
+		ui.displayFromFilters(text)
+	}
 }
 
-func getEntriesFromFilters(t *UI, filters []string) []*thing {
-	db := t.Conn()
-	stmt, params := sqlmaker.TuiStmtOrderBy().BuildSelect([]any{}, filters)
-	rows, err := db.Query(stmt, params...)
-	check(err, rows.Err(), db.Close())
-	return fromRows(rows)
-}
-
+// TODO: It could depends of previous command? E.g. "update".
 func (ui *UI) operate() {
 	item := ui.current()
 	if item == nil {
@@ -61,7 +65,7 @@ func (ui *UI) operate() {
 	// Some classes are not edited but added to the filters stack
 	case obj.Tag:
 		ui.addFilter("." + item.main)
-	case obj.Class:
+	case obj.ClassName:
 		ui.addFilter("=" + item.main)
 	case obj.Variable:
 		ui.searchByFilter(item.main + ":")
@@ -78,18 +82,7 @@ func openCurrentItem(ui *UI) {
 	}
 }
 
-func (ui *UI) addFilter(newFilter string) {
-	ui.displayFromFilters(ui.Filters.GetText(false) + " " + newFilter)
-}
-
-func (ui *UI) removeLastFilter() string {
-	text := strings.TrimRight(ui.Filters.GetText(false), " ")
-	if index := strings.LastIndex(text, " "); index > 0 {
-		return text[:index]
-	}
-	return ""
-}
-
+// TODO: Default key bindings and command specific key-bindings
 func setListNavigationKey(ui *UI) {
 	ui.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		idx := ui.currentItem
@@ -101,6 +94,12 @@ func setListNavigationKey(ui *UI) {
 		}
 		maxIdx := len(ui.items) - 1
 		switch event.Rune() {
+		case config.KeyListSimilar:
+			ui.findSimilar(ui.current().main)
+			idx = 0
+		case config.KeyListFlorilegeFind:
+			ui.findFts(ui.current().main)
+			idx = 0
 		case config.KeyListSearchOnKeyStroke:
 			ui.searchOnKey(false)
 		case config.KeyListFilterAdd:
@@ -136,6 +135,10 @@ func setListNavigationKey(ui *UI) {
 			idx = maxIdx
 		case config.KeyListQuit:
 			ui.App.Stop()
+		case config.KeyListHistoryBackward:
+			ui.displayFromText(ui.history.backward())
+		case config.KeyListHistoryForward:
+			ui.displayFromText(ui.history.forward())
 		case config.KeyListClassPick:
 			ui.chooseClass()
 		case config.KeyListDelete:

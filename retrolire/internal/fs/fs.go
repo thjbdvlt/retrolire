@@ -26,6 +26,9 @@ const PeopleDirectoryName = "people"
 // LogFile - Log file for TUI
 const LogFile = ".retrolire.log"
 
+// StopWordFile - File containing stopwords
+const StopWordFile = ".retrolire.stopswords"
+
 // FileExists - Check if a file exists
 func FileExists(fp string) bool {
 	_, err := os.Stat(fp)

@@ -5,12 +5,12 @@ import (
 	"retrolire/internal/config"
 )
 
-// Obj - The object type that a command operates on
-type Obj int
+// Class - The object type that a command operates on
+type Class int
 
 // Object types
 const (
-	None Obj = iota
+	None Class = iota
 	Entry
 	Tag
 	Person
@@ -26,7 +26,7 @@ const (
 	Relation              // Not implemented yet
 	Variable
 	// Many things are actually object classes, like TUI elements
-	Class
+	ClassName
 	Command
 	UIElement
 	N // N - Used to know how many classes are defined
@@ -47,14 +47,14 @@ func Names() []string {
 }
 
 // FromName - Get Obj int constant from name
-func FromName(s string) Obj {
+func FromName(s string) Class {
 	aliasedName, ok := config.AliasesClasses[s]
 	if ok {
 		s = aliasedName
 	}
 	for i, name := range Names() {
 		if name == s {
-			return Obj(i)
+			return Class(i)
 		}
 	}
 	return None

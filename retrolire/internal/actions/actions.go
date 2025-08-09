@@ -39,8 +39,7 @@ func EditEntryLine(cn connector, id string, line any) error {
 		return errors.New("unsupported type for parameter line")
 	}
 	util.EditFileLine(fname, lineString)
-	note.Parse([]string{id}, []int64{0}, cn)
-	return nil
+	return note.Parse([]string{id}, []int64{0}, cn)
 }
 
 // EditEntry - Edit an entry's note
@@ -62,8 +61,7 @@ func EditPerson(cn connector, name string) error {
 	}
 	filepath := filepath.Join(fs.PeopleDirectoryName, fs.ToFilename(name))
 	util.EditFile(filepath + config.Ext)
-	note.Parse([]string{filepath}, []int64{0}, cn)
-	return nil
+	return note.Parse([]string{filepath}, []int64{0}, cn)
 }
 
 // DeleteEntry - Delete an entry. This function don't ask for confirmation.
@@ -242,30 +240,14 @@ WHERE entry = $1`, id)
 	return UpdateEntryTags(cn, id, newTags, true)
 }
 
-func getSomethingAsSlice(db *sql.DB, stmt string) ([]string, error) {
-	rows, err := db.Query(stmt)
-	if err != nil {
-		return []string{}, err
-	} else if err = rows.Err(); err != nil {
-		return []string{}, err
-	}
-	var things []string
-	for rows.Next() {
-		var t string
-		util.Check(rows.Scan(&t))
-		things = append(things, t)
-	}
-	return things, nil
-}
-
 // GetTags - Get a list of tags
 func GetTags(db *sql.DB) []string {
-	tags, _ := getSomethingAsSlice(db, `SELECT DISTINCT tag FROM tag`)
+	tags, _ := util.GetSomethingAsSlice(db, `SELECT DISTINCT tag FROM tag`)
 	return tags
 }
 
 // GetFields - Get a list of fields (CSL variables)
 func GetFields(db *sql.DB) []string {
-	fields, _ := getSomethingAsSlice(db, `SELECT DISTINCT x.key FROM entry, json_each(csl) as x`)
+	fields, _ := util.GetSomethingAsSlice(db, `SELECT DISTINCT x.key FROM entry, json_each(csl) as x`)
 	return fields
 }

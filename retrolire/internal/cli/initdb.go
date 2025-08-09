@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"retrolire/internal/fs"
+	"retrolire/internal/nlp"
 )
 
 func initDB(*CliState) {
@@ -37,6 +38,7 @@ func initDB(*CliState) {
   lastedit   int  NOT NULL DEFAULT 0, -- Not (unixepoch('now'))!
   lastpick   int  NOT NULL DEFAULT 0,
   title     text  GENERATED ALWAYS AS (coalesce(csl ->> 'title', '')),
+	vec       blob,
   head      text  GENERATED ALWAYS AS (title || CHAR(10) || '    ' || author || '  @' || id)
 )`,
 		// Textobj is that table that holds information about quotes, concepts, ideas, ...,
@@ -51,9 +53,10 @@ func initDB(*CliState) {
   entry  text   NOT NULL,
   text   text   NOT NULL DEFAULT '',
 	least  text   NOT NULL DEFAULT '',
-  linenr  int    NOT NULL DEFAULT 1,
-  class   int    NOT NULL DEFAULT 0,
+  linenr  int   NOT NULL DEFAULT 1,
+  class   int   NOT NULL DEFAULT 0,
   page   text   NOT NULL DEFAULT '',
+	vec    blob,
   head   text   GENERATED ALWAS AS (text || '  @' || entry || ',' || linenr || ',' || page)
 )`,
 		`CREATE TABLE IF NOT EXISTS entry_person (entry text NOT NULL, person text NOT NULL)`,
@@ -70,8 +73,9 @@ func initDB(*CliState) {
 	e.author AS author,
 	e.tags   AS  tags,
 	e.csl    AS   csl,
-	1        AS  line,
-	1        AS class
+	-1       AS  line,
+	1        AS class,
+	e.vec    AS   vec
 	FROM entry e
 	UNION ALL
 	SELECT
@@ -82,7 +86,8 @@ func initDB(*CliState) {
 	e.tags   AS  tags,
 	e.csl    AS   csl,
 	o.linenr AS  line,
-	o.class  AS class
+	o.class  AS class,
+	o.vec    AS   vec
 	FROM textobj o
 	LEFT JOIN entry e ON e.id = o.entry
 	UNION ALL
@@ -94,7 +99,8 @@ func initDB(*CliState) {
 	'{}'     AS csl,
 	'{}'     AS tags,
 	0        AS line,
-	2        AS class
+	2        AS class,
+	NULL     AS   vec
 	FROM _tag
 	UNION ALL
 	SELECT
@@ -105,7 +111,8 @@ func initDB(*CliState) {
 	'{}'     AS csl,
 	'{}'     AS tags,
 	0        AS line,
-	3        AS class
+	3        AS class,
+	NULL     AS   vec
 	FROM person
 	`,
 		// Textobjs and Entries are printed through a similar interface.
@@ -159,6 +166,10 @@ BEGIN
 					json_each(x.value) AS y
     ) WHERE id = NEW.id;
 END`,
+		// Create a FTS5 table
+		`CREATE VIRTUAL TABLE fts USING fts5(id, line, main)`,
+		// Create a virtual table for word vectors. (New vectors training will replace it.)
+		`CREATE TABLE vec_word (word text, vec blob)`,
 		// Authors, translator and editors are put in the table person
 		`CREATE TRIGGER personInsert
 AFTER INSERT ON entry
@@ -191,5 +202,5 @@ END`,
 	} {
 		check2(tx.Exec(i))
 	}
-	check(tx.Commit(), db.Close())
+	check(tx.Commit(), nlp.UpdateStopWords(db), db.Close())
 }

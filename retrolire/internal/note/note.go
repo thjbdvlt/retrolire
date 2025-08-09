@@ -1,3 +1,4 @@
+// Package note - Note parsing
 package note
 
 import (
@@ -8,20 +9,16 @@ import (
 	"strings"
 
 	"retrolire/internal/config"
-	"retrolire/internal/state"
 	"retrolire/internal/fs"
-	"retrolire/internal/util"
+	"retrolire/internal/nlp/word2vec"
 	"retrolire/internal/obj"
+	"retrolire/internal/state"
 )
 
-var check = util.Check
-
-// isComment - Check if a line is a comment
 func isComment(line string) bool {
 	return strings.HasPrefix(line, "(") && strings.HasSuffix(line, ")")
 }
 
-// removeCommaComment - Remove double comma comments (",,")
 func removeCommaComment(line string) string {
 	idx := strings.Index(line, ",,")
 	if idx != -1 {
@@ -30,16 +27,8 @@ func removeCommaComment(line string) string {
 	return line
 }
 
-func extractPageNumber(re *regexp.Regexp, line string) string {
-	matches := re.FindStringSubmatch(line)
-	if len(matches) > 1 {
-		return matches[1]
-	}
-	return ""
-}
-
 type lineParser struct {
-	class obj.Obj
+	class obj.Class
 	fn    func(line string) (main string, least string, ok bool)
 }
 
@@ -109,11 +98,75 @@ func initLineParsers() []lineParser {
 	}
 }
 
-func parseFile(root *os.Root, id string, fp string, stmt *sql.Stmt, reExclude *regexp.Regexp, rePage *regexp.Regexp, parsers []lineParser) {
+func (p parser) extractPageNumber(line string) string {
+	matches := p.rePage.FindStringSubmatch(line)
+	if len(matches) > 1 {
+		return matches[1]
+	}
+	return ""
+}
+
+type parseStatements struct {
+	insert    *sql.Stmt
+	delete    *sql.Stmt
+	insertFts *sql.Stmt
+	deleteFts *sql.Stmt
+	update    *sql.Stmt
+}
+
+func initStatement(s *parseStatements, tx *sql.Tx) error {
 	var err error
-	file, err := root.OpenFile(fp, os.O_RDONLY, 0)
+	s.delete, err = tx.Prepare(`DELETE FROM textobj WHERE entry = ?`)
 	if err != nil {
-		return
+		return err
+	}
+	s.deleteFts, err = tx.Prepare(`DELETE FROM fts WHERE id = ? AND LINE > 0`)
+	if err != nil {
+		return err
+	}
+	s.insert, err = tx.Prepare(`INSERT INTO textobj
+	(entry, class, text, least, linenr, page, vec)
+	VALUES (?, ?, ?, ?, ?, ?, ?)`)
+	if err != nil {
+		return err
+	}
+	s.insertFts, err = tx.Prepare(`INSERT INTO fts
+	(id, line, main)
+	VALUES (?, ?, ?)`)
+	if err != nil {
+		return err
+	}
+	s.update, err = tx.Prepare(`UPDATE entry SET lastedit = ? WHERE id = ?`)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type parser struct {
+	root       *os.Root
+	reExclude  *regexp.Regexp
+	rePage     *regexp.Regexp
+	parsers    []lineParser
+	vectorizer *word2vec.Vectorizer
+	*parseStatements
+}
+
+func newParser(db *sql.DB) *parser {
+	return &parser{
+		rePage:     regexp.MustCompile(`\((\d+)\)[.,;:]?$`),
+		reExclude:  regexp.MustCompile(`^[^a-zA-Z]*$`),
+		parsers:    initLineParsers(),
+		root:       fs.Root(),
+		vectorizer: word2vec.NewVectorizer(db),
+	}
+}
+
+func parseFile(psr parser, id string, fp string) error {
+	var err error
+	file, err := psr.root.OpenFile(fp, os.O_RDONLY, 0)
+	if err != nil {
+		return err
 	}
 	scanner := bufio.NewScanner(file)
 	linenr := 0
@@ -122,57 +175,109 @@ func parseFile(root *os.Root, id string, fp string, stmt *sql.Stmt, reExclude *r
 		line := scanner.Text()
 		line = strings.TrimSpace(line)
 		line = removeCommaComment(line)
-		if line != "" && !isComment(line) && reExclude.FindStringIndex(line) == nil {
-			pn := extractPageNumber(rePage, line)
-			for _, p := range parsers {
+		if line != "" && !isComment(line) && psr.reExclude.FindStringIndex(line) == nil {
+			pn := psr.extractPageNumber(line)
+			for _, p := range psr.parsers {
 				main, least, ok := p.fn(line)
 				if ok {
-					_, err = stmt.Exec(id, p.class, main, least, linenr, pn)
-					check(err)
+					var bvec []byte
+					tokens, vector := psr.vectorizer.Vectorize(main)
+					if vector != nil {
+						bvec, err = vector.AsBytes()
+						if err != nil {
+							bvec = nil
+						}
+					}
+					_, err = psr.insert.Exec(id, p.class, main, least, linenr, pn, bvec)
+					if err != nil {
+						panic(err)
+					}
+					_, err = psr.insertFts.Exec(id, linenr, strings.Join(tokens, " "))
+					if err != nil {
+						panic(err)
+					}
 					break
 				}
 			}
 		}
 	}
-	check(file.Close())
+	return file.Close()
 }
 
-// Parse - Parse entries note
-func Parse(ids []string, lastedits []int64, cn state.Connector) {
-	// Compile Regexps only once
-	var rePage = regexp.MustCompile(`\((\d+)\)[.,;:]?$`)
-	var reExclude = regexp.MustCompile(`^[^a-zA-Z]*$`)
-	var parsers = initLineParsers()
-	// Run the whole function in Root for safety
-	root := fs.Root()
+// Parse entries note
+func Parse(ids []string, lastedits []int64, cn state.Connector) error {
 	db := cn.Conn()
+	defer db.Close()
 	update := make([]bool, len(ids))
 	tx, err := db.Begin()
-	check(err)
-	// Delete from textobjs before re-inserting
-	stmtDelete, err := tx.Prepare(`DELETE FROM textobj WHERE entry = ?`)
-	check(err)
-	// Parse notes
-	stmtInsert, err := tx.Prepare(`INSERT INTO textobj (entry, class, text, least, linenr, page) VALUES (?, ?, ?, ?, ?, ?)`)
-	check(err)
-	stmtUpdate, err := tx.Prepare(`UPDATE entry SET lastedit = ? WHERE id = ?`)
-	check(err)
+	if err != nil {
+		return err
+	}
+	psr := newParser(db)
+	psr.parseStatements = &parseStatements{}
+	err = initStatement(psr.parseStatements, tx)
+	if err != nil {
+		return err
+	}
 	for i, id := range ids {
 		fp := id + config.Ext
-		check(err)
-		fileInfo, err := root.Stat(fp)
+		fileInfo, err := psr.root.Stat(fp)
 		if err == nil {
 			modified := fileInfo.ModTime().Unix()
 			if modified > lastedits[i] {
 				lastedits[i] = modified
 				update[i] = true
-				_, err = stmtDelete.Exec(id)
-				check(err)
-				parseFile(root, id, fp, stmtInsert, reExclude, rePage, parsers)
-				_, err = stmtUpdate.Exec(lastedits[i], id)
-				check(err)
+				_, err = psr.delete.Exec(id)
+				if err != nil {
+					return err
+				}
+				_, err = psr.deleteFts.Exec(id)
+				if err != nil {
+					return err
+				}
+				err = parseFile(*psr, id, fp)
+				if err != nil {
+					return err
+				}
+				_, err = psr.update.Exec(lastedits[i], id)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
-	check(tx.Commit(), db.Close())
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// ParseAll - Parse all entries notes
+func ParseAll(t *state.State) error {
+	db := t.Conn()
+	var ids []string
+	var lastedits []int64
+	rows, err := db.Query(`SELECT id, 0 FROM entry`)
+	if err != nil {
+		return err
+	}
+	if err = rows.Err(); err != nil {
+		return err
+	}
+	for rows.Next() {
+		var id string
+		var lastedit int64
+		err = rows.Scan(&id, &lastedit)
+		if err != nil {
+			return err
+		}
+		ids = append(ids, id)
+		lastedits = append(lastedits, lastedit)
+	}
+	err = db.Close()
+	if err != nil {
+		return err
+	}
+	return Parse(ids, lastedits, t)
 }

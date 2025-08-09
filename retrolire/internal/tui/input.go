@@ -26,7 +26,7 @@ type inputer struct {
 func (ui *UI) addInput(fn inputer) {
 	in := ui.cleanInput()
 	in.SetText(fn.initText)
-	ui.setMode(fn.label, fn.uid)
+	ui.setMode(fn.label+": ", fn.uid)
 	if !fn.noKeyMap {
 		setInputKeyMaps(in)
 	}
@@ -56,8 +56,9 @@ func (ui *UI) searchByFilter(initText string) {
 		uid:      elements.ModeFilter,
 		onDone: func(s *UI, in *tview.InputField) {
 			text := s.Filters.GetText(false) + " " + in.GetText()
-			s.displayFromFilters(text)
+			s.displayFromText(text)
 			s.Filters.SetText(text)
+			ui.history.add(text)
 		},
 	},
 	)
@@ -142,7 +143,7 @@ func (ui *UI) chooseTag() {
 func (ui *UI) chooseClass() {
 	classes := obj.Names()
 	classes = slices.DeleteFunc(classes, func(s string) bool { return s == "" })
-	ui.stock = fromSlice(classes, obj.Class)
+	ui.stock = fromSlice(classes, obj.ClassName)
 	ui.display(ui.stock)
 	ui.searchOnKey(true)
 }

@@ -16,6 +16,8 @@ import (
 	"retrolire/internal/cli/pick"
 	"retrolire/internal/config"
 	"retrolire/internal/fs"
+	"retrolire/internal/nlp"
+	"retrolire/internal/nlp/word2vec"
 	"retrolire/internal/note"
 	"retrolire/internal/obj"
 	"retrolire/internal/sqlmaker"
@@ -27,6 +29,8 @@ import (
 type cmd = cliCommand
 
 var commands = map[string]cmd{
+	"vectors":      cmd{fn: initVectors},
+	"stopwords":    cmd{fn: editStopWords},
 	"tui":          cmd{fn: initTUI},
 	"cite":         cmd{fn: cite, stmt: sqlmaker.EntryStmt, pick: true},
 	"edit":         cmd{fn: edit, stmt: sqlmaker.EntryStmt, pick: true},
@@ -51,7 +55,6 @@ var commands = map[string]cmd{
 	"_field":       cmd{fn: toStdoutSpace, stmt: sqlmaker.CmpFieldStmt},
 }
 
-// getCommandFromArgs - Get command from command line arguments
 func getCommandFromArgs(args []string, options *opts.Opts) ([]string, cliCommand) {
 	var c cmd
 	var ok bool
@@ -196,13 +199,11 @@ func add(t *CliState) {
 	}
 	// Add entries to the database
 	db = t.Conn()
-	check2(db.Exec(`WITH x AS (
-  SELECT value FROM json_each($1)
-)
-INSERT INTO entry (id, csl)
-SELECT value ->> 'id', value
+	check2(db.Exec(`WITH x AS (SELECT value FROM json_each($1))
+INSERT INTO entry (id, csl, vec)
+SELECT value ->> 'id', value, NULL
 FROM x`, string(bdata)))
-	check(db.Close())
+	check(word2vec.VectorizeEntriesTitle(db, true), db.Close())
 }
 
 func parse(t *CliState) {
@@ -223,8 +224,7 @@ func parse(t *CliState) {
 	}
 	check(t.Rows.Close())
 	db := t.Conn()
-	note.Parse(ids, lastedits, t)
-	check(db.Close())
+	check(note.Parse(ids, lastedits, t), db.Close())
 }
 
 func getIndent(b string) int {
@@ -234,6 +234,18 @@ func getIndent(b string) int {
 		}
 	}
 	return 0
+}
+
+func parseStopWords(t *CliState) {
+	db := t.Conn()
+	err := nlp.UpdateStopWords(db)
+	if err != nil {
+		panic(err)
+	}
+	err = db.Close()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func parseTags(t *CliState) {
@@ -362,6 +374,23 @@ func toStdout(t *CliState, sep string) {
 }
 
 func initTUI(t *CliState) { tui.InitApp(&t.State) }
+
+func initVectors(t *CliState) {
+	err := word2vec.Train(&t.State)
+	if err != nil {
+		panic(err)
+	}
+	db := t.Conn()
+	check(word2vec.VectorizeEntriesTitle(db, false))
+	check(db.Close())
+	check(note.ParseAll(&t.State))
+}
+
+func editStopWords(t *CliState) {
+	fs.CD()
+	util.EditFile(fs.StopWordFile)
+	parseStopWords(t)
+}
 
 func editTagsTree(t *CliState) {
 	fs.CD()

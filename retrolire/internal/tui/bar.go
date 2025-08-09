@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	// tcell "github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"retrolire/internal/tui/elements"
 )
@@ -40,10 +39,9 @@ func (b *bar) setNumber(index, total int) {
 	}
 }
 
-func (b *bar) cleanInput() *tview.InputField {
-	// Better than SetText("") because it doesn't trigger a Changed function
-	b.Grid.RemoveItem(b.Input)
-	b.Input = tview.NewInputField()
-	b.Grid.AddItem(b.Input, 0, 0, 1, 1, 0, 0, false)
-	return b.Input
+func (ui *UI) cleanInput() *tview.InputField {
+	ui.Grid.RemoveItem(ui.Input) // Better than SetText: doesn't trigger a Changed function
+	ui.Input = tview.NewInputField()
+	ui.Grid.AddItem(ui.Input, 0, 0, 1, 1, 0, 0, false)
+	return ui.Input
 }
