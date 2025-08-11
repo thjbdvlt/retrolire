@@ -32,7 +32,6 @@ type catalogue struct {
 	offset      int
 	currentItem int
 	done        func()
-	changed     func(int)
 	*tview.Box
 }
 
@@ -59,7 +58,8 @@ func (ui *UI) put(th *thing, screen tcell.Screen, x, y, width int, selected bool
 	main := th.main
 	mainIndexStart := x + 3 + len(th.id)
 	remainingWidth := width - mainIndexStart
-	if mainIndexStart+th.matchIndex > width && mainIndexStart < len(main) {
+	if mainIndexStart+th.matchIndex > width && th.matchIndex-remainingWidth/3 < len(main) {
+		// FIXME: slice bounds out of range
 		main = main[th.matchIndex-remainingWidth/3:]
 		firstSep = separatorAlignment
 	}
@@ -92,9 +92,6 @@ func newCatalogue(ui *UI) *catalogue {
 		Box: tview.NewBox(), ui: ui,
 	}
 	c.done = func() { c.Clear() }
-	// c.changed = func(index int) {
-	// 	ui.setNumber(index, len(c.items))
-	// }
 	return c
 }
 

@@ -96,6 +96,40 @@ func WordVectorFromDB(db *sql.DB, word string) *Vector {
 	return VectorFromBytes(b)
 }
 
+// MostSimilarFromDB get most similar words from word vectors stored in the database
+func MostSimilarFromDB(db *sql.DB, word string, n int) ([]string, error) {
+	var similar []string
+	rows, err := db.Query(`SELECT word
+	FROM vec_word
+	WHERE vec
+	MATCH (SELECT vec FROM vec_word WHERE word = ?)
+	AND k = ?`, word, n)
+	if err != nil {
+		return nil, err
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	var i int
+	for rows.Next() {
+		var s string
+		err = rows.Scan(&s)
+		if s != "" && s != word {
+			similar = append(similar, s)
+		}
+		i++
+		if err != nil {
+			return nil, err
+		}
+	}
+	// Remove the first one: it's also the word itself.
+	// And resize the array so it matches the real number of similar words returns.
+	// (Even if there is very little chance that we require more words than vectors number.)
+	// return similar[1:i], nil
+	return similar, nil
+}
+
 // TODO: Named errors
 
 func insertVectors(db *sql.DB, vectors map[string]Vector, dim int) error {

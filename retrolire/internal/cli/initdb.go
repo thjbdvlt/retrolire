@@ -167,7 +167,7 @@ BEGIN
     ) WHERE id = NEW.id;
 END`,
 		// Create a FTS5 table
-		`CREATE VIRTUAL TABLE fts USING fts5(id, line, main)`,
+		`CREATE VIRTUAL TABLE fts USING fts5(id UNINDEXED, line UNINDEXED, main)`,
 		// Create a virtual table for word vectors. (New vectors training will replace it.)
 		`CREATE TABLE vec_word (word text, vec blob)`,
 		// Authors, translator and editors are put in the table person
