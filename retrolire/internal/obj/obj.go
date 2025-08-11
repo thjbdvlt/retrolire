@@ -20,12 +20,11 @@ const (
 	Quote
 	Idea
 	Example
-	Florilege             // Not implemented yet
-	Compilation           // Not implemented yet
-	CommentydBibliography // Not implemented yet
-	Summary               // Not implemented yet
-	Relation              // Not implemented yet
-	Variable
+	Florilege   // Not implemented yet
+	Compilation // Not implemented yet
+	Summary     // Not implemented yet
+	Relation    // Not implemented yet
+	Variable    // CSL-Variable
 	// Many things are actually object classes, like TUI elements
 	ClassName
 	Command
@@ -43,6 +42,9 @@ func Names() []string {
 	names[Example] = "example"
 	names[Person] = "person"
 	names[Heading] = "heading"
+	names[PdfAnnot] = "annotation"
+	names[Compilation] = "compilation"
+	names[Florilege] = "florilege"
 	names[Tag] = "tag"
 	return names
 }

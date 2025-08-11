@@ -13,6 +13,7 @@ import (
 	"retrolire/internal/obj"
 	"retrolire/internal/state"
 	"retrolire/internal/tui/elements"
+	"retrolire/internal/tui/mode"
 	"retrolire/internal/tui/style"
 	"retrolire/internal/util"
 )
@@ -84,12 +85,12 @@ func openCurrentItem(ui *UI) {
 	}
 }
 
-func (ui *UI) setMode(name string, uid elements.UID) {
+func (ui *UI) setMode(m mode.Mode, uid elements.UID) {
 	if uid == -1 { // Shortcut for List Navigation, i.e. no special mode
 		ui.Input.SetLabel("")
 		ui.Input.SetLabelStyle(ui.styles.UI[elements.ModeListNavigation])
 	} else {
-		ui.Input.SetLabel(name)
+		ui.Input.SetLabel(mode.Label(m) + ": ")
 		ui.Input.SetLabelStyle(ui.styles.UI[uid])
 	}
 }
@@ -113,9 +114,9 @@ func (ui *UI) cleanInput() *tview.InputField {
 func setListNavigationKey(ui *UI) {
 	ui.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		idx := ui.currentItem
-		switch event.Key() {
-		case tcell.KeyEnter:
+		if event.Key() == tcell.KeyEnter {
 			ui.operate()
+			return nil
 		}
 		maxIdx := len(ui.items) - 1
 		switch event.Rune() {

@@ -19,8 +19,9 @@ type Connector interface{ Conn() *sql.DB }
 // State - Main program state, mostly used to (re)connect to the database
 type State struct {
 	dbChecked    bool
-	Logger       *log.Logger
+	logger       *log.Logger
 	RunDirectory string
+	isTui        bool // TODO
 }
 
 func NewState() *State {
@@ -42,6 +43,10 @@ func (s *State) Conn() *sql.DB {
 	if err != nil {
 		fmt.Println("Error opening database in directory", config.Directory)
 		os.Exit(1)
+	}
+	err = db.Ping()
+	if err != nil {
+		log.Fatal(err)
 	}
 	// Fix slow note parsing and 'database is locked'
 	_, err = db.Exec("PRAGMA synchronous = OFF")
@@ -76,16 +81,16 @@ func (s *State) initLogger() {
 	if err != nil {
 		panic(err)
 	}
-	s.Logger = log.New(f, "", log.Ldate|log.Ltime)
+	s.logger = log.New(f, "", log.Ldate|log.Ltime)
 }
 
 func (s *State) log(errs []error) {
-	if s.Logger == nil {
+	if s.logger == nil {
 		s.initLogger()
 	}
 	for _, e := range errs {
 		if e != nil {
-			s.Logger.Println(e)
+			s.logger.Println(e)
 		}
 	}
 }

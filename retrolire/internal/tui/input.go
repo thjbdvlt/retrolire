@@ -12,21 +12,22 @@ import (
 	"retrolire/internal/config"
 	"retrolire/internal/obj"
 	"retrolire/internal/tui/elements"
+	"retrolire/internal/tui/mode"
 )
 
 type inputer struct {
-	label    string
 	uid      elements.UID
 	onChange func(*UI, string)
 	onDone   func(*UI, *tview.InputField)
 	noKeyMap bool
 	initText string
+	mode     mode.Mode
 }
 
 func (ui *UI) addInput(fn inputer) {
 	in := ui.cleanInput()
 	in.SetText(fn.initText)
-	ui.setMode(fn.label+": ", fn.uid)
+	ui.setMode(fn.mode, fn.uid)
 	if !fn.noKeyMap {
 		setInputKeyMaps(in)
 	}
@@ -39,7 +40,7 @@ func (ui *UI) addInput(fn inputer) {
 		if ui.GetItemCount() < 0 {
 			ui.SetCurrentItem(0)
 		}
-		ui.setMode("", -1)
+		ui.setMode(mode.List, -1)
 		ui.cleanInput()
 	})
 	if fn.onChange != nil {
@@ -51,7 +52,7 @@ func (ui *UI) addInput(fn inputer) {
 
 func (ui *UI) searchByFilter(initText string) {
 	ui.addInput(inputer{
-		label:    "FILTER",
+		mode:     mode.Filter,
 		initText: initText,
 		uid:      elements.ModeFilter,
 		onDone: func(s *UI, in *tview.InputField) {
@@ -65,12 +66,12 @@ func (ui *UI) searchByFilter(initText string) {
 
 func (ui *UI) searchOnKey(select1 bool) {
 	ui.addInput(inputer{
-		label: "SEARCH",
-		uid:   elements.ModeSearch,
+		mode: mode.SearchOnKey,
+		uid:  elements.ModeSearch,
 		onChange: func(s *UI, text string) {
 			s.display(filterItems(s.stock, text))
 			if select1 && len(s.items) == 1 {
-				s.setMode("", elements.ModeListNavigation)
+				s.setMode(mode.List, elements.ModeListNavigation)
 				s.cleanInput()
 				s.App.SetFocus(s.catalogue)
 				s.operate()
@@ -81,7 +82,7 @@ func (ui *UI) searchOnKey(select1 bool) {
 
 func (ui *UI) jumpLabel() {
 	ui.addInput(inputer{
-		label:    "LABEL",
+		mode:     mode.JumpLabel,
 		uid:      elements.ModeLabel,
 		noKeyMap: true,
 		onChange: func(u *UI, text string) {
@@ -96,7 +97,7 @@ func (ui *UI) jumpLabel() {
 				}
 			}
 			u.App.SetFocus(u.catalogue)
-			u.setMode("", -1)
+			u.setMode(mode.List, -1)
 		},
 	})
 }
@@ -107,7 +108,7 @@ func (ui *UI) confirmDelete() {
 		return
 	}
 	ui.addInput(inputer{
-		label:    "DELETE?",
+		mode:     mode.Delete,
 		uid:      elements.DeleteEntry,
 		noKeyMap: true,
 		onDone: func(s *UI, in *tview.InputField) {

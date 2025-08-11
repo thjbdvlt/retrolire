@@ -153,24 +153,55 @@ func fromIsbnOrDoi(method string, identifier string) []byte {
 	return bufOut.Bytes()
 }
 
+func readFromStdin(t *CliState) []byte {
+	var buf bytes.Buffer
+	_, err := buf.ReadFrom(os.Stdin)
+	if err != nil {
+		t.Log(err)
+		fmt.Fprintf(os.Stderr, "Couldn't read from stdin. Abort.")
+		os.Exit(0)
+	}
+	return buf.Bytes()
+}
+
+func readFromFileOrFile(t *CliState, path string) []byte {
+	var err error
+	if path == "-" {
+		return readFromStdin(t)
+	}
+	if !fs.FileExists(path) {
+		fmt.Fprintln(os.Stderr, "File not found:", path)
+		os.Exit(0)
+		return nil
+	}
+	err = os.Chdir(t.RunDirectory)
+	if err != nil {
+		t.Log(err)
+		fmt.Fprintln(os.Stderr, "Error opening file:", path)
+		os.Exit(0)
+		return nil
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Couldn't open file:", path)
+		os.Exit(0)
+		return nil
+	}
+	fs.CD()
+	return data
+}
+
 func add(t *CliState) {
 	popen2 := util.Popen2
-	var buf bytes.Buffer
-	// Data is read from stdin if "-"
-	// TODO: Bibtex / JSON from file (or error)
-	// => Error, because I change directory at the start of the program.
-	data := t.Args[1]
-	if data == "-" {
-		check2(buf.ReadFrom(os.Stdin))
-		data = buf.String()
-	}
-	bdata := []byte(data)
 	method := t.Args[0]
+	data := t.Args[1]
+	var bdata []byte
 	pandoc := []string{"pandoc", "-f", "biblatex", "-t", "csljson"}
 	switch method {
 	case "json":
+		bdata = readFromFileOrFile(t, data)
 	case "bibtex":
-		bdata = popen2(bdata, pandoc)
+		bdata = popen2(readFromFileOrFile(t, data), pandoc)
 	case "doi", "isbn":
 		bdata = popen2(fromIsbnOrDoi(method, data), pandoc)
 		bdata = util.EditTemp(bdata)
