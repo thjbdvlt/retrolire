@@ -8,10 +8,14 @@ import (
 
 	"retrolire/internal/cli"
 	"retrolire/internal/fs"
+	"retrolire/internal/state"
 )
 
 func main() {
 	sqlite_vec.Auto()
-	fs.CD() // Change to the retrolire directory. This avoid building paths laters.
-	cli.Call(os.Args[1:])
+	// /!\ Initialize state before changing directory
+	t := state.NewState()
+	// Change to the retrolire directory. This avoid building paths laters.
+	fs.CD()
+	cli.Call(t, os.Args[1:])
 }

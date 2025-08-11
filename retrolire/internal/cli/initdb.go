@@ -61,6 +61,15 @@ func initDB(*CliState) {
 )`,
 		`CREATE TABLE IF NOT EXISTS entry_person (entry text NOT NULL, person text NOT NULL)`,
 		`CREATE TABLE IF NOT EXISTS person (name text PRIMARY KEY NOT NULL)`,
+		`CREATE TABLE pdf_annots (
+  entry      text NOT NULL,
+	text       text NOT NULL,
+	color      text,
+	page_label text,
+	page        int,
+	class       int NOT NULL,
+	vec        blob
+)`,
 		// Textobjs and Entries are printed through a similar interface.
 		// So it makes sense to have a view that gives access to both table as a same structure.
 		// UNION ALL is required over simple UNION to avoid DISTINCT, which affect performance.
@@ -114,6 +123,19 @@ func initDB(*CliState) {
 	3        AS class,
 	NULL     AS   vec
 	FROM person
+	UNION ALL
+	SELECT
+	a.entry  AS    id,
+	a.text   AS  main,
+	''       AS least,
+	e.author AS author,
+	e.tags   AS  tags,
+	e.csl    AS   csl,
+	0        AS  line,
+	a.class    AS class,
+	a.vec    AS   vec
+	FROM pdf_annots a
+	JOIN entry e ON e.id = a.entry
 	`,
 		// Textobjs and Entries are printed through a similar interface.
 		// So it makes sense to have a view that gives access to both table as a same structure

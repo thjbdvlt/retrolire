@@ -65,10 +65,10 @@ WHERE id = ?`, entryID))
 }
 
 // Call - Parse arguments and call command
-func Call(args []string) {
+func Call(st *state.State, args []string) {
 	var err error
 	var c cliCommand
-	t := &CliState{}
+	t := &CliState{State: *st}
 	args, t.Opts = opts.Parse(args)
 	args, c = getCommandFromArgs(args, t.Opts)
 	na := c.nArgs

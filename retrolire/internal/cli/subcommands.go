@@ -29,6 +29,7 @@ import (
 type cmd = cliCommand
 
 var commands = map[string]cmd{
+	"annots":       cmd{fn: pdfAnnots, pick: true, stmt: sqlmaker.EntryStmt, nArgs: 1},
 	"vectors":      cmd{fn: initVectors},
 	"stopwords":    cmd{fn: editStopWords},
 	"tui":          cmd{fn: initTUI},
@@ -78,10 +79,6 @@ func getCommandFromArgs(args []string, options *opts.Opts) ([]string, cliCommand
 }
 
 func getByName(name string, options *opts.Opts) (cmd, bool) {
-	aliasedName, ok := config.AliasesCommand[name]
-	if ok {
-		name = aliasedName
-	}
 	if options.TextObj {
 		name = "textobj-" + name
 	} else if strings.HasPrefix(name, "textobj-") {
@@ -161,6 +158,7 @@ func add(t *CliState) {
 	var buf bytes.Buffer
 	// Data is read from stdin if "-"
 	// TODO: Bibtex / JSON from file (or error)
+	// => Error, because I change directory at the start of the program.
 	data := t.Args[1]
 	if data == "-" {
 		check2(buf.ReadFrom(os.Stdin))
@@ -396,4 +394,38 @@ func editTagsTree(t *CliState) {
 	fs.CD()
 	util.EditFile(fs.TagFile)
 	parseTags(t)
+}
+
+func pdfAnnots(t *CliState) {
+	sh := exec.Command("pdfannots", "--format", "json", t.Args[0])
+	sh.Dir = t.RunDirectory
+	var bufOut bytes.Buffer
+	sh.Stdout = &bufOut
+	sh.Stdin = os.Stdin
+	sh.Stderr = os.Stderr
+	err := sh.Run()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Issue with pdfAnnots. Is it installed?")
+		t.Log(err)
+		os.Exit(1)
+	}
+	db := t.Conn()
+	_, err = db.Exec(`INSERT INTO pdf_annots
+	(entry, text, color, page_label, page, class)
+	SELECT
+	? AS entry,
+	coalesce(value ->> 'contents', value ->> 'text'),
+	value ->> 'color',
+	value ->> 'page_label',
+	value ->> 'page',
+	? AS class
+	FROM json_each(?)`, t.ID.Entry, obj.PdfAnnot, bufOut.String())
+	if err != nil {
+		fmt.Println("Encountered some issue, sorry.")
+		t.Log(err)
+	}
+	err = db.Close()
+	if err != nil {
+		t.Log(err)
+	}
 }

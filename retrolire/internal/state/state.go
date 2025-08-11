@@ -18,8 +18,17 @@ type Connector interface{ Conn() *sql.DB }
 
 // State - Main program state, mostly used to (re)connect to the database
 type State struct {
-	dbChecked bool
-	Logger    *log.Logger
+	dbChecked    bool
+	Logger       *log.Logger
+	RunDirectory string
+}
+
+func NewState() *State {
+	dir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	return &State{RunDirectory: dir}
 }
 
 // Conn - Connect to the database. This function calls log.Fatal if connection fails.

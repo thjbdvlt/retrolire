@@ -14,6 +14,7 @@ const (
 	Entry
 	Tag
 	Person
+	PdfAnnot
 	Heading
 	Concept
 	Quote
