@@ -11,19 +11,10 @@ import (
 	"retrolire/internal/tui/style"
 )
 
-// We use a main grid and 2 subgrids:
-//
-//   Mode | Search | Infos   <= Subgrid 1
-//   ---------------------
-//   Active filters
-//   ---------------------
-//   Label | List item
-//   Label | List item       <= Subgrid 2
-//   Label | List
-//   ...   | ...
-//   ---------------------
-//   Preview
-//
+const rowPreview = 2
+const rowInput = 1
+const rowFilters = 3
+const rowCatalogue = 0
 
 // InitApp - Initialize the TUI application
 func InitApp(t *state.State) {
@@ -32,35 +23,23 @@ func InitApp(t *state.State) {
 		PrimaryTextColor:         tcell.ColorBlack,
 	}
 	ui := &UI{
-		App:     tview.NewApplication(),
-		State:   t,
-		styles:  style.FromConfig(),
-		history: initHistory(),
+		App:    tview.NewApplication(),
+		State:  t,
+		styles: style.FromConfig(),
 	}
 	ui.App.SetTitle("retrolire")
-	initStatusBar(ui)
-	initPreview(ui)
+	ui.Input = tview.NewInputField()
+	ui.Filters = tview.NewInputField().
+		SetFieldStyle(ui.styles.UI[elements.ActiveFilters]).
+		SetLabelStyle(ui.styles.UI[elements.NumberOfItems])
+	ui.Preview = tview.NewTextView().
+		SetDynamicColors(false).
+		SetTextStyle(ui.styles.UI[elements.Preview])
 	initCatalogue(ui)
 	buildGrids(ui)
 	if err := ui.App.SetRoot(ui.Grid, true).SetFocus(ui.catalogue).Run(); err != nil {
 		panic(err)
 	}
-}
-
-func initPreview(ui *UI) {
-	ui.Preview = tview.NewTextView().
-		SetDynamicColors(false).
-		SetTextStyle(ui.styles.UI[elements.Preview])
-}
-
-func initStatusBar(ui *UI) {
-	ui.Input = tview.NewInputField()
-	ui.Number = tview.NewTextView().
-		SetDynamicColors(false).
-		SetTextStyle(ui.styles.UI[elements.NumberOfItems]).
-		SetTextAlign(tview.AlignRight)
-	ui.Filters = tview.NewTextView().
-		SetTextStyle(ui.styles.UI[elements.ActiveFilters])
 }
 
 func initLabels(ui *UI) {
@@ -86,15 +65,12 @@ func initCatalogue(ui *UI) {
 
 func buildGrids(ui *UI) {
 	ui.Grid = tview.NewGrid()
-	ui.Grid.SetColumns(0).SetRows(1, 1, 0, 6).SetBorders(false)
-	ui.bar.Grid = tview.NewGrid().SetColumns(0, 0).SetBorders(false)
+	ui.Grid.SetColumns(0).SetRows(0, 1, 6, 1).SetBorders(false)
 	ui.catalogue.Grid = tview.NewGrid()
 	ui.catalogue.Grid.SetColumns(1, 0).SetBorder(false)
 	ui.catalogue.Grid.AddItem(ui.catalogue, 0, 1, 1, 3, 0, 0, false)
 	ui.catalogue.Grid.AddItem(ui.Labels, 0, 0, 1, 1, 0, 0, false)
-	ui.bar.Grid.AddItem(ui.Number, 0, 1, 1, 1, 0, 0, false)
-	ui.Grid.AddItem(ui.bar.Grid, 0, 0, 1, 1, 0, 0, false)
-	ui.Grid.AddItem(ui.Filters, 1, 0, 1, 1, 0, 0, false)
-	ui.Grid.AddItem(ui.catalogue.Grid, 2, 0, 1, 1, 0, 0, false)
-	ui.Grid.AddItem(ui.Preview, 3, 0, 1, 1, 0, 0, false)
+	ui.Grid.AddItem(ui.Filters, rowFilters, 0, 1, 1, 0, 0, false)
+	ui.Grid.AddItem(ui.catalogue.Grid, rowCatalogue, 0, 1, 1, 0, 0, false)
+	ui.Grid.AddItem(ui.Preview, rowPreview, 0, 1, 1, 0, 0, false)
 }

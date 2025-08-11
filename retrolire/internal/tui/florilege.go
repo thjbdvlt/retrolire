@@ -33,7 +33,6 @@ func (ui *UI) findSimilar(text string) {
 		ui.Log(rows.Err())
 		return
 	}
-	ui.history.add(string(magicPrefixCosine) + text)
 	ui.display(fromRows(rows))
 }
 
@@ -45,6 +44,5 @@ func (ui *UI) findFts(text string) {
 		ui.Log(err)
 		return
 	}
-	ui.history.add(string(magicPrefixTFS) + text)
 	ui.display(fromRows(rows))
 }

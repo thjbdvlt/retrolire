@@ -8,11 +8,11 @@ import (
 )
 
 func (ui *UI) addFilter(newFilter string) {
-	ui.displayFromFilters(ui.Filters.GetText(false) + " " + newFilter)
+	ui.displayFromFilters(ui.Filters.GetText() + " " + newFilter)
 }
 
 func (ui *UI) removeLastFilter() string {
-	text := strings.TrimRight(ui.Filters.GetText(false), " ")
+	text := strings.TrimRight(ui.Filters.GetText(), " ")
 	if index := strings.LastIndex(text, " "); index > 0 {
 		return text[:index]
 	}

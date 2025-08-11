@@ -199,8 +199,8 @@ func (c *catalogue) Draw(screen tcell.Screen) {
 		if y >= bottomLimit {
 			break
 		}
-		_ = c.ui.put(item, screen, x, y, width, index == c.currentItem)
 		y++
+		_ = c.ui.put(item, screen, x, height-y, width, index == c.currentItem)
 	}
 }
 

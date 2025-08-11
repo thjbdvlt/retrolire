@@ -55,10 +55,9 @@ func (ui *UI) searchByFilter(initText string) {
 		initText: initText,
 		uid:      elements.ModeFilter,
 		onDone: func(s *UI, in *tview.InputField) {
-			text := s.Filters.GetText(false) + " " + in.GetText()
+			text := s.Filters.GetText() + " " + in.GetText()
 			s.displayFromText(text)
 			s.Filters.SetText(text)
-			ui.history.add(text)
 		},
 	},
 	)
@@ -89,9 +88,11 @@ func (ui *UI) jumpLabel() {
 			for i, label := range []rune(config.JumpLabels) {
 				if string(label) == text {
 					u.cleanInput()
+					_, _, _, height := ui.GetInnerRect()
+					i = (height - i) - 1
 					u.currentItem = i + u.offset
 					u.App.SetFocus(u.catalogue)
-					u.setNumber(i+u.offset+1, len(u.items))
+					u.previewIndex(u.currentItem, len(u.items))
 				}
 			}
 			u.App.SetFocus(u.catalogue)

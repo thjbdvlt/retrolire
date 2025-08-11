@@ -2,6 +2,7 @@
 package tui
 
 import (
+	"strconv"
 	"strings"
 
 	tcell "github.com/gdamore/tcell/v2"
@@ -11,6 +12,7 @@ import (
 	"retrolire/internal/config"
 	"retrolire/internal/obj"
 	"retrolire/internal/state"
+	"retrolire/internal/tui/elements"
 	"retrolire/internal/tui/style"
 	"retrolire/internal/util"
 )
@@ -23,11 +25,11 @@ type UI struct {
 	Grid    *tview.Grid
 	Preview *tview.TextView
 	Labels  *tview.List
+	Filters *tview.InputField
 	styles  style.Styles
-	bar
+	Input   *tview.InputField
 	*catalogue
 	*state.State
-	*history
 }
 
 const magicPrefixCosine = '*'
@@ -82,13 +84,36 @@ func openCurrentItem(ui *UI) {
 	}
 }
 
-// TODO: Default key bindings and command specific key-bindings
+func (ui *UI) setMode(name string, uid elements.UID) {
+	if uid == -1 { // Shortcut for List Navigation, i.e. no special mode
+		ui.Input.SetLabel("")
+		ui.Input.SetLabelStyle(ui.styles.UI[elements.ModeListNavigation])
+	} else {
+		ui.Input.SetLabel(name)
+		ui.Input.SetLabelStyle(ui.styles.UI[uid])
+	}
+}
+
+func (ui *UI) setNumber(index, total int) {
+	var sb strings.Builder
+	sb.WriteString(strconv.Itoa(index))
+	sb.WriteString("/")
+	sb.WriteString(strconv.Itoa(total))
+	str := sb.String()
+	ui.Filters.SetLabel(str)
+}
+
+func (ui *UI) cleanInput() *tview.InputField {
+	ui.Grid.RemoveItem(ui.Input) // Better than SetText: doesn't trigger a Changed function
+	ui.Input = tview.NewInputField()
+	ui.Grid.AddItem(ui.Input, rowInput, 0, 1, 1, 0, 0, false)
+	return ui.Input
+}
+
 func setListNavigationKey(ui *UI) {
 	ui.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		idx := ui.currentItem
 		switch event.Key() {
-		case tcell.KeyBackspace: // TODO
-		case tcell.KeyEscape: // TODO
 		case tcell.KeyEnter:
 			ui.operate()
 		}
@@ -122,23 +147,19 @@ func setListNavigationKey(ui *UI) {
 		case config.KeyListPreviewScrollUp:
 			ui.scrollPreview(-1)
 		case config.KeyListUp:
-			idx--
-		case config.KeyListDown:
 			idx++
+		case config.KeyListDown:
+			idx--
 		case config.KeyListPageUp:
-			idx -= config.PageStep
-		case config.KeyListPageDown:
 			idx += config.PageStep
+		case config.KeyListPageDown:
+			idx -= config.PageStep
 		case config.KeyListTop:
-			idx = 0
-		case config.KeyListBottom:
 			idx = maxIdx
+		case config.KeyListBottom:
+			idx = 0
 		case config.KeyListQuit:
 			ui.App.Stop()
-		case config.KeyListHistoryBackward:
-			ui.displayFromText(ui.history.backward())
-		case config.KeyListHistoryForward:
-			ui.displayFromText(ui.history.forward())
 		case config.KeyListClassPick:
 			ui.chooseClass()
 		case config.KeyListDelete:
@@ -151,7 +172,7 @@ func setListNavigationKey(ui *UI) {
 		case config.KeyListHelp: // TODO
 			// TODO: Key for florilège
 			// TODO: Key for compilation (if different than florilege)
-			// TODO: Key for COMMENTED bibliography (i.e. collection)
+			// TODO: Key for Commented bibliography (i.e. collection)
 			// TODO: Key for concordance
 		}
 		if idx < 0 {
