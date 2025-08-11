@@ -418,8 +418,8 @@ func pdfAnnots(t *CliState) {
 	value ->> 'color',
 	value ->> 'page_label',
 	value ->> 'page',
-	? AS class
-	FROM json_each(?)`, t.ID.Entry, obj.PdfAnnot, bufOut.String())
+	CASE WHEN value ->> 'type' = 'Text'  THEN ? ELSE ? END AS class
+	FROM json_each(?)`, t.ID.Entry, obj.PdfAnnot, obj.Quote, bufOut.String())
 	if err != nil {
 		fmt.Println("Encountered some issue, sorry.")
 		t.Log(err)
