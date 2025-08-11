@@ -14,12 +14,13 @@ import (
 )
 
 type thing struct {
-	class obj.Class
-	line  int
-	id    string
-	main  string
-	least string
-	lower string
+	class      obj.Class
+	line       int
+	id         string
+	main       string
+	least      string
+	lower      string
+	matchIndex int
 }
 
 type catalogue struct {
@@ -53,26 +54,35 @@ func (ui *UI) put(th *thing, screen tcell.Screen, x, y, width int, selected bool
 		return x
 	}
 	const separator = "   "
-	texts := []string{" ", " ", th.id, separator, th.main, separator, th.least}
+	const separatorAlignment = separator + "..."
+	firstSep := separator
+	main := th.main
+	mainIndexStart := x + 3 + len(th.id)
+	remainingWidth := width - mainIndexStart
+	if mainIndexStart+th.matchIndex > width && mainIndexStart < len(main) {
+		main = main[th.matchIndex-remainingWidth/3:]
+		firstSep = separatorAlignment
+	}
+	texts := []string{" ", " ", th.id, firstSep, main, separator, th.least}
 	styles := []tcell.Style{
 		ui.styles.Least,
 		ui.styles.Least,
 		ui.styles.ID[th.class],
-		ui.styles.Least,
+		ui.styles.Main[th.class],
 		ui.styles.Main[th.class],
 		ui.styles.Least,
 		ui.styles.Least,
 		ui.styles.Least,
 	}
 	if selected {
-		for i, s := range styles {
-			styles[i] = s.Bold(true)
+		for i, style := range styles {
+			styles[i] = style.Bold(true)
 		}
 		styles[0] = ui.styles.Selected
 		texts[0] = config.SelectedSign
 	}
-	for i, t := range texts {
-		x = putText(t, screen, x, y, width, styles[i])
+	for i, text := range texts {
+		x = putText(text, screen, x, y, width, styles[i])
 	}
 	return x
 }
@@ -236,13 +246,15 @@ func fromRows(rows *sql.Rows) []*thing {
 	return items
 }
 
-func containsAny(s string, searches []string) bool {
+func containsAnyIndexLast(s string, searches []string) int {
+	var index int
 	for _, i := range searches {
-		if !strings.Contains(s, i) {
-			return false
+		index = strings.Index(s, i)
+		if index == -1 {
+			return -1
 		}
 	}
-	return true
+	return index
 }
 
 // Returns a copy of Items, but filter using search.
@@ -250,12 +262,13 @@ func containsAny(s string, searches []string) bool {
 // To search a pattern containing space, replace spaces by underscores.
 // (It's not possible to search for underscores with this syntax.)
 func filterItems(items []*thing, search string) []*thing {
-	searches := strings.Split(search, " ")
+	searches := strings.Split(strings.TrimSpace(search), " ")
 	for i, s := range searches {
 		searches[i] = strings.ReplaceAll(strings.TrimSpace(s), "_", " ")
 	}
 	return slices.DeleteFunc(slices.Clone(items), func(t *thing) bool {
-		return !containsAny(t.lower, searches)
+		t.matchIndex = containsAnyIndexLast(t.lower, searches)
+		return t.matchIndex == -1
 	})
 }
 
