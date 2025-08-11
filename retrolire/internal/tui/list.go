@@ -47,6 +47,19 @@ func putText(text string, screen tcell.Screen, x, y, width int, style tcell.Styl
 	return x
 }
 
+// Modified version of: https://stackoverflow.com/a/38537764
+func substring(s string, start int) string {
+	startIndex := 0
+	i := 0
+	for j := range s {
+		if i == start {
+			startIndex = j
+		}
+		i++
+	}
+	return s[startIndex:]
+}
+
 // put a thing on the screen
 func (ui *UI) put(th *thing, screen tcell.Screen, x, y, width int, selected bool) int {
 	if th == nil {
@@ -59,8 +72,7 @@ func (ui *UI) put(th *thing, screen tcell.Screen, x, y, width int, selected bool
 	mainIndexStart := x + 3 + len(th.id)
 	remainingWidth := width - mainIndexStart
 	if mainIndexStart+th.matchIndex > width && th.matchIndex-remainingWidth/3 < len(main) {
-		// FIXME: slice bounds out of range
-		main = main[th.matchIndex-remainingWidth/3:]
+		main = substring(main, th.matchIndex-remainingWidth/3)
 		firstSep = separatorAlignment
 	}
 	texts := []string{" ", " ", th.id, firstSep, main, separator, th.least}
