@@ -152,6 +152,10 @@ func setListNavigationKey(ui *UI) {
 			idx++
 		case config.KeyListDown:
 			idx--
+		case config.KeyListYank:
+			ui.yankWithText(idx)
+		case config.KeyListYankCitation:
+			ui.yankCitation(idx)
 		case config.KeyListPageUp:
 			idx += config.PageStep
 		case config.KeyListPageDown:

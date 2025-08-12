@@ -9,6 +9,7 @@ import (
 
 	sqlite_vec "github.com/asg017/sqlite-vec-go-bindings/cgo"
 	_ "github.com/mattn/go-sqlite3"
+	"golang.design/x/clipboard"
 
 	"retrolire/internal/config"
 	"retrolire/internal/fs"
@@ -28,6 +29,8 @@ type MainState struct {
 	dbChecked      bool
 	logger         *log.Logger
 	startDirectory string
+	clip           bool
+	clipInit       bool
 }
 
 // RunDirectory - The directory when the program start
@@ -67,6 +70,17 @@ func NewState(connect bool) *MainState {
 		t.db = t.conn()
 	}
 	return t
+}
+
+// WriteClipBoard - Write something to the clipboard, if clipboard available.
+func (s *MainState) WriteClipBoard(text string) {
+	if !s.clipInit {
+		s.clip = clipboard.Init() == nil
+		s.clipInit = true
+	}
+	if s.clip {
+		clipboard.Write(clipboard.FmtText, []byte(text))
+	}
 }
 
 // Conn - Connect to the database. This function calls log.Fatal if connection fails.
