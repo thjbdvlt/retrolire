@@ -174,7 +174,7 @@ func TuiStmtOrderBy() *SelectStmt {
 func TuiStmtFTS() *SelectStmt {
 	return &SelectStmt{
 		// TODO: Don't match again class / line / id
-		stmt:            `
+		stmt: `
 SELECT e.id, e.line, e.main, e.least, e.class FROM obj e
 JOIN fts f ON f.id = e.id AND e.line = f.line
 		`,

@@ -347,6 +347,7 @@ func parseTags(t *CliState) {
 			t.Log(err)
 		}
 	}
+	// TODO: Modify the QUERY instead of data
 	_, err = tx.Exec(`DELETE FROM tag WHERE implicit = true`)
 	t.Log(err)
 	_, err = tx.Exec(`INSERT INTO tag (entry, tag, implicit)
@@ -384,8 +385,8 @@ func printFilepath(t *CliState) {
 	if len(t.Args) == 0 {
 		return
 	}
-	fp, linenr := idToPath(t.Args[0])
-	_, _ = fmt.Fprint(os.Stdout, path.Join(config.Directory, fp), " ", linenr)
+	fp, line := idToPath(t.Args[0])
+	_, _ = fmt.Fprint(os.Stdout, path.Join(config.Directory, fp), " ", line)
 }
 
 func list(t *CliState) {

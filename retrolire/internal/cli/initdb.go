@@ -35,6 +35,7 @@ func initDB(t *CliState) {
   id        text  PRIMARY KEY NOT NULL,
   csl      jsonb  NOT NULL,
 	tags     jsonb  NOT NULL DEFAULT '{}',
+	note_tags jsonb NOT NULL DEFAULT '{}',
   author    text  NOT NULL DEFAULT '',
   lastedit   int  NOT NULL DEFAULT 0, -- Not (unixepoch('now'))!
   lastpick   int  NOT NULL DEFAULT 0,
@@ -51,14 +52,15 @@ func initDB(t *CliState) {
 		`CREATE TABLE IF NOT EXISTS textobj (
 	-- 2025-08-08: Textobj can now be parsed not only in entries notes but also people
   -- entry  text   NOT NULL REFERENCES entry(id),
-  entry  text   NOT NULL,
-  text   text   NOT NULL DEFAULT '',
-	least  text   NOT NULL DEFAULT '',
-  linenr  int   NOT NULL DEFAULT 1,
-  class   int   NOT NULL DEFAULT 0,
-  page   text   NOT NULL DEFAULT '',
-	vec    blob,
-  head   text   GENERATED ALWAS AS (text || '  @' || entry || ',' || linenr || ',' || page)
+  entry   text   NOT NULL,
+  text    text   NOT NULL DEFAULT '',
+	least   text   NOT NULL DEFAULT '',
+  line     int   NOT NULL DEFAULT 1,
+  class    int   NOT NULL DEFAULT 0,
+  locator text   NOT NULL DEFAULT '',
+	vec     blob,
+	tags   jsonb   NOT NULL DEFAULT '{}',
+  head    text   GENERATED ALWAS AS (text || '  @' || entry || ',' || line || ',' || locator)
 )`,
 		`CREATE TABLE IF NOT EXISTS entry_person (entry text NOT NULL, person text NOT NULL)`,
 		`CREATE TABLE IF NOT EXISTS person (name text PRIMARY KEY NOT NULL)`,
@@ -95,7 +97,7 @@ func initDB(t *CliState) {
 	e.author AS author,
 	e.tags   AS  tags,
 	e.csl    AS   csl,
-	o.linenr AS  line,
+	o.line AS  line,
 	o.class  AS class,
 	o.vec    AS   vec
 	FROM textobj o

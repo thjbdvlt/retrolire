@@ -69,10 +69,11 @@ func filterClass(s string) (string, []any, bool) {
 }
 
 func filterTag(s string) (clause string, params []any, ok bool) {
+	// TODO: Inferences
 	const pfx = TagPrefix
 	const lp = len(pfx)
 	if strings.HasPrefix(s, pfx) {
-		clause = "e.tags ->> ? = 1"
+		clause = "e.tags ->> ? IS NOT NULL"
 		p := strings.TrimSpace(s[lp:])
 		return clause, []any{p}, true
 	}

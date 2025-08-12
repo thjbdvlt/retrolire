@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	sqlite_vec "github.com/asg017/sqlite-vec-go-bindings/cgo"
 	_ "github.com/mattn/go-sqlite3"
@@ -43,6 +44,10 @@ func (MainState) IsTui() bool { return false }
 
 // DB - Get a database connection, either existing or new.
 func (s *MainState) DB() *sql.DB {
+	if s.db == nil {
+		s.db = s.conn()
+		return s.db
+	}
 	err := s.db.Ping()
 	if err == nil {
 		return s.db
@@ -167,14 +172,15 @@ func (s *MainState) CloseDB() {
 func NoErr(s State, err error, message ...string) {
 	if err != nil {
 		s.Log(err)
-		if s.DB() != nil {
-			s.Log(s.DB().Close())
+		db := s.DB()
+		if db != nil && db.Ping() == nil {
+			s.Log(db.Close())
 		}
 		s.Exit() // Before printing message to stderr, to ensure a clean screen
 		if len(message) == 0 {
 			message = []string{err.Error()}
 		}
-		fmt.Fprintln(os.Stderr, message)
+		fmt.Fprintln(os.Stderr, strings.Join(message, " "))
 		os.Exit(1)
 	}
 }

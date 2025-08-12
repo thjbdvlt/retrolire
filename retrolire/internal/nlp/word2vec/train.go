@@ -23,7 +23,7 @@ func getText(t state.State) ([]string, error) {
 	rows, err := db.Query(`SELECT title
 	FROM entry
 	UNION ALL
-	SELECT group_concat(text, ' ' order by linenr)
+	SELECT group_concat(text, ' ' order by line)
 	FROM textobj
 	GROUP BY entry`)
 	if err != nil {
