@@ -28,7 +28,6 @@ func UpdateStopWords(db *sql.DB) error {
 	for scanner.Scan() {
 		stopwords = append(stopwords, strings.TrimSpace(scanner.Text()))
 	}
-	defer db.Close()
 	tx, err := db.Begin()
 	if err != nil {
 		return err

@@ -18,14 +18,8 @@ import (
 
 const dim = config.WordVectorDimensions
 
-func getText(t *state.State) ([]string, error) {
-	db := t.Conn()
-	defer db.Close()
-	// rows, err := db.Query(`SELECT title
-	// FROM entry
-	// UNION ALL
-	// SELECT text
-	// FROM textobj`)
+func getText(t state.State) ([]string, error) {
+	db := t.DB()
 	rows, err := db.Query(`SELECT title
 	FROM entry
 	UNION ALL
@@ -51,9 +45,8 @@ func getText(t *state.State) ([]string, error) {
 	return texts, nil
 }
 
-func preprocess(t *state.State, texts []string) []string {
-	db := t.Conn()
-	defer db.Close()
+func preprocess(t state.State, texts []string) []string {
+	db := t.DB()
 	lector := tokenizer.NewLector(db)
 	for i, s := range texts {
 		texts[i] = strings.Join(lector.Process(s), " ")
@@ -62,7 +55,7 @@ func preprocess(t *state.State, texts []string) []string {
 }
 
 // Train - Train word vectors from the notes texts and put the result in DB
-func Train(t *state.State) error {
+func Train(t state.State) error {
 	var err error
 	texts, err := getText(t)
 	texts = preprocess(t, texts)
@@ -105,8 +98,7 @@ func Train(t *state.State) error {
 	}
 	_ = os.Remove(file.Name())
 	mp := model.AsMap()
-	db := t.Conn()
-	defer db.Close()
+	db := t.DB()
 	// Convert to float32
 	vectors := make(map[string]Vector, len((*mp)))
 	for k, v := range *mp {

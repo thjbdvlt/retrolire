@@ -15,6 +15,7 @@ import (
 	"retrolire/internal/cli/opts"
 	"retrolire/internal/cli/pick"
 	"retrolire/internal/config"
+	"retrolire/internal/edit"
 	"retrolire/internal/fs"
 	"retrolire/internal/nlp"
 	"retrolire/internal/nlp/word2vec"
@@ -23,7 +24,6 @@ import (
 	"retrolire/internal/sqlmaker"
 	"retrolire/internal/state"
 	"retrolire/internal/tui"
-	"retrolire/internal/util"
 )
 
 type cmd = cliCommand
@@ -34,13 +34,13 @@ var commands = map[string]cmd{
 	"stopwords":    cmd{fn: editStopWords},
 	"tui":          cmd{fn: initTUI},
 	"cite":         cmd{fn: cite, stmt: sqlmaker.EntryStmt, pick: true},
-	"edit":         cmd{fn: edit, stmt: sqlmaker.EntryStmt, pick: true},
+	"edit":         cmd{fn: editEntry, stmt: sqlmaker.EntryStmt, pick: true},
 	"update":       cmd{fn: update, stmt: sqlmaker.EntryStmt, nArgs: 1, pick: true},
 	"tag":          cmd{fn: tag, stmt: sqlmaker.EntryStmt, pick: true},
 	"tag-pick":     cmd{fn: tagPick, stmt: sqlmaker.EntryStmt, pick: true},
 	"delete":       cmd{fn: del, stmt: sqlmaker.EntryStmt, pick: true},
 	"open":         cmd{fn: open, stmt: sqlmaker.OpenEntryStmt, pick: true},
-	"textobj-edit": cmd{fn: edit, stmt: sqlmaker.TextobjStmt, pick: true},
+	"textobj-edit": cmd{fn: editEntry, stmt: sqlmaker.TextobjStmt, pick: true},
 	"textobj-cite": cmd{fn: cite, stmt: sqlmaker.TextobjStmt, pick: true},
 	"list":         cmd{fn: list, stmt: sqlmaker.ListStmt},
 	"edit-tags":    cmd{fn: editTagsTree},
@@ -67,7 +67,8 @@ func getCommandFromArgs(args []string, options *opts.Opts) ([]string, cliCommand
 	if c, ok = getByName(name, options); ok {
 		args = args[1:]
 	} else if c, ok = getByName(config.DefaultCmd, options); !ok {
-		util.Abort("Unknown command (config):", config.DefaultCmd)
+		fmt.Fprintln(os.Stderr, "unknown command (config):", config.DefaultCmd)
+		os.Exit(1)
 	}
 	// If a "textobj-" command have been used through -c/-q/-i flag, add textobj class
 	// So "retrolire cite -q" is just like "retrolire textobj-cite 2"
@@ -88,9 +89,6 @@ func getByName(name string, options *opts.Opts) (cmd, bool) {
 	return c, ok
 }
 
-var check = util.Check
-var check2 = util.Check2
-
 func cite(t *CliState) {
 	_, _ = fmt.Fprint(os.Stdout, t.ID.Entry)
 	if t.ID.Page != "" {
@@ -98,31 +96,31 @@ func cite(t *CliState) {
 	}
 }
 
-func edit(t *CliState) {
+func editEntry(t *CliState) {
 	if id, line := t.ID.Entry, t.ID.Line; id != "" {
-		check(actions.EditEntryLine(t, id, line))
+		state.NoErr(t, actions.EditEntryLine(t, id, line), "Failed to edit file.")
 	}
 }
 
 func del(t *CliState) {
 	fmt.Println(actions.Head(t, t.ID.Entry)) // Show selected entry
-	if util.ConfirmUser("Confirm deletion?") {
-		check(actions.DeleteEntry(t, t.ID.Entry))
+	if confirmUser("Confirm deletion?") {
+		state.NoErr(t, actions.DeleteEntry(t, t.ID.Entry), "Deletion failed.")
 		fmt.Println("Deleted:", t.ID.Entry)
 	}
 }
 
 func update(t *CliState) {
-	check(actions.UpdateEntryField(t, t.ID.Entry, t.Args[0]))
+	state.NoErr(t, actions.UpdateEntryField(t, t.ID.Entry, t.Args[0]), "Update failed.")
 }
 
 func tag(t *CliState) {
-	check(actions.EditEntryTags(t, t.ID.Entry))
+	state.NoErr(t, actions.EditEntryTags(t, t.ID.Entry), "Update failed..")
 }
 
 func tagPick(t *CliState) {
 	var err error
-	db := t.Conn()
+	db := t.DB()
 	rows, err := db.Query(`WITH x AS (
   SELECT tag, count(DISTINCT entry) AS count
   FROM tag
@@ -131,25 +129,24 @@ func tagPick(t *CliState) {
 SELECT x.tag
 FROM x
 ORDER BY x.count DESC`)
-	check(err, rows.Err(), db.Close())
-	head := actions.Head(t, t.ID.Entry)
-	tags, _ := pick.Pick(rows, []string{"--multi", "--header", head})
-	check(actions.UpdateEntryTags(t, t.ID.Entry, tags, false))
+	state.NoErr(t, err, "Couldn't get tags from the database.")
+	state.NoErr(t, rows.Err(), "Couldn't get tags from the database.")
+	head, err := actions.Head(t, t.ID.Entry)
+	state.NoErr(t, err, "This entry is not in the database:", t.ID.Entry)
+	tags, _ := pick.Pick(t, rows, []string{"--multi", "--header", head})
+	state.NoErr(t, actions.UpdateEntryTags(t, t.ID.Entry, tags, false), "Update failed.")
 }
 
 func open(t *CliState) {
-	check(actions.OpenEntryURL(t, t.ID.Entry))
+	state.NoErr(t, actions.OpenEntryURL(t, t.ID.Entry), "Opening file failed.")
 }
 
-func fromIsbnOrDoi(method string, identifier string) []byte {
+func fromIsbnOrDoi(t *CliState, method string, identifier string) []byte {
 	var bufOut bytes.Buffer
 	sh := exec.Command("fetchref", method, identifier)
 	sh.Stdout = &bufOut
 	sh.Stderr = os.Stderr
-	err := sh.Run()
-	if err != nil {
-		os.Exit(1)
-	}
+	state.NoErr(t, sh.Run(), "Could get reference.")
 	return bufOut.Bytes()
 }
 
@@ -174,7 +171,7 @@ func readFromFileOrFile(t *CliState, path string) []byte {
 		os.Exit(0)
 		return nil
 	}
-	err = os.Chdir(t.RunDirectory)
+	err = os.Chdir(t.RunDirectory())
 	if err != nil {
 		t.Log(err)
 		fmt.Fprintln(os.Stderr, "Error opening file:", path)
@@ -191,59 +188,79 @@ func readFromFileOrFile(t *CliState, path string) []byte {
 	return data
 }
 
+func popen2(in []byte, command []string) ([]byte, error) {
+	var bufIn *bytes.Buffer
+	var bufOut bytes.Buffer
+	bufIn = bytes.NewBuffer(in)
+	sh := exec.Command(command[0], command[1:]...)
+	sh.Stdin = bufIn
+	sh.Stdout = &bufOut
+	sh.Stderr = os.Stderr
+	err := sh.Run()
+	if err != nil {
+		return nil, err
+	}
+	return bufOut.Bytes(), nil
+}
+
 func add(t *CliState) {
-	popen2 := util.Popen2
+	var err error
 	method := t.Args[0]
 	data := t.Args[1]
+	// Get existing IDs
+	row := t.DB().QueryRow(`SELECT coalesce(group_concat(id, ' '), '') FROM entry`)
+	var ids string
+	state.NoErr(t, row.Scan(&ids), "Couldn't get data from the database. Aborted.")
+	_ = t.DB().Close() // Close database while executing shell subprocesses
 	var bdata []byte
 	pandoc := []string{"pandoc", "-f", "biblatex", "-t", "csljson"}
 	switch method {
 	case "json":
 		bdata = readFromFileOrFile(t, data)
 	case "bibtex":
-		bdata = popen2(readFromFileOrFile(t, data), pandoc)
+		bdata, err = popen2(readFromFileOrFile(t, data), pandoc)
 	case "doi", "isbn":
-		bdata = popen2(fromIsbnOrDoi(method, data), pandoc)
-		bdata = util.EditTemp(bdata)
+		bdata, err = popen2(fromIsbnOrDoi(t, method, data), pandoc)
+		state.NoErr(t, err)
+		bdata, err = edit.Temp(bdata)
+		state.NoErr(t, err)
 	case "template":
 		template, ok := bibtex.GetTemplate(data)
 		if !ok {
 			os.Exit(1)
 		}
-		bdata = util.EditTemp(template)
-		bdata = popen2(bdata, pandoc)
+		bdata, err = edit.Temp(template)
+		state.NoErr(t, err)
+		bdata, err = popen2(bdata, pandoc)
+		state.NoErr(t, err)
 	default:
 		fmt.Println("Unknown method:", method)
 		os.Exit(1)
 	}
-	db := t.Conn()
-	// Get IDs
-	row := db.QueryRow(`SELECT coalesce(group_concat(id, ' '), '') FROM entry`)
-	var ids string
-	check(row.Scan(&ids))
-	check(db.Close())
 	// Make unique IDs (if option --keep-id isn't set)
 	if !t.Opts.KeepIDs {
-		bdata = popen2(bdata, []string{"csljson-update", "-", ids})
+		bdata, err = popen2(bdata, []string{"csljson-update", "-", ids})
+		state.NoErr(t, err)
 	}
 	// Add entries to the database
-	db = t.Conn()
-	check2(db.Exec(`WITH x AS (SELECT value FROM json_each($1))
-INSERT INTO entry (id, csl, vec)
-SELECT value ->> 'id', value, NULL
-FROM x`, string(bdata)))
-	check(word2vec.VectorizeEntriesTitle(db, true), db.Close())
+	db := t.DB()
+	_, err = db.Exec(`WITH x AS (SELECT value FROM json_each($1))
+	INSERT INTO entry (id, csl, vec)
+	SELECT value ->> 'id', value, NULL
+	FROM x`, string(bdata))
+	state.NoErr(t, err, "something failed while adding entries")
+	state.NoErr(t, word2vec.VectorizeEntriesTitle(db, true), "(no vectors)")
 }
 
 func parse(t *CliState) {
 	// Parse notes matching filters
 	var ids []string
 	var lastedits []int64
-	check(t.Rows.Err())
+	state.NoErr(t, t.Rows.Err(), "couldn't get data from the database")
 	for t.Rows.Next() {
 		var id string
 		var lastedit int64
-		check(t.Rows.Scan(&id, &lastedit))
+		t.Log(t.Rows.Scan(&id, &lastedit))
 		ids = append(ids, id)
 		if !t.Opts.Force {
 			lastedits = append(lastedits, lastedit)
@@ -251,9 +268,7 @@ func parse(t *CliState) {
 			lastedits = append(lastedits, 0)
 		}
 	}
-	check(t.Rows.Close())
-	db := t.Conn()
-	check(note.Parse(ids, lastedits, t), db.Close())
+	state.NoErr(t, note.Parse(t, ids, lastedits), "failed to parse notes")
 }
 
 func getIndent(b string) int {
@@ -266,7 +281,7 @@ func getIndent(b string) int {
 }
 
 func parseStopWords(t *CliState) {
-	db := t.Conn()
+	db := t.DB()
 	err := nlp.UpdateStopWords(db)
 	if err != nil {
 		panic(err)
@@ -281,7 +296,8 @@ func parseTags(t *CliState) {
 	// Open the tag file
 	root := fs.Root()
 	file, err := root.Open(fs.TagFile)
-	check(err, root.Close())
+	state.NoErr(t, err, "couldn't open tag file")
+	t.Log(root.Close())
 	// Two slices to store line contents and indent levels
 	lines := []string{}
 	indents := []int{}
@@ -302,14 +318,14 @@ func parseTags(t *CliState) {
 	}
 	tree := make([]string, maxIndent+1) // Store tag hierarchy
 	// Delete the tagDef table that describe the tag hierarchy
-	db := t.Conn()
+	db := t.DB()
 	tx, err := db.Begin()
-	check(err)
-	check2(tx.Exec(`DELETE FROM tagDef`))
-	check(err)
+	state.NoErr(t, err, err.Error())
+	_, err = tx.Exec(`DELETE FROM tagDef`)
+	state.NoErr(t, err, err.Error())
 	// Re-Create the hierarchy
 	stmt, err := tx.Prepare(`INSERT INTO tagDef (tag, isA) VALUES (?, ?)`)
-	check(err)
+	state.NoErr(t, err, "couldn't add tag hierarchy")
 	for i, line := range lines {
 		// Aliases
 		if strings.Contains(line, "=") {
@@ -317,7 +333,8 @@ func parseTags(t *CliState) {
 			if len(s) > 1 {
 				name := strings.TrimSpace(s[0])
 				for _, alias := range s[1:] {
-					check2(stmt.Exec(name, strings.TrimSpace(alias)))
+					_, err = stmt.Exec(name, strings.TrimSpace(alias))
+					t.Log(err)
 				}
 				line = name // Remove aliases for hierarchy
 			}
@@ -326,24 +343,28 @@ func parseTags(t *CliState) {
 		indent := indents[i]
 		tree[indent] = line
 		for y := 0; y < indent; y++ {
-			check2(stmt.Exec(line, tree[y]))
+			_, err = stmt.Exec(line, tree[y])
+			t.Log(err)
 		}
 	}
-	check2(tx.Exec(`DELETE FROM tag WHERE implicit = true`))
-	check2(tx.Exec(`INSERT INTO tag (entry, tag, implicit)
-SELECT distinct t.entry, td.isA, true
-FROM tag t
-JOIN tagDef td ON t.tag = td.tag`))
+	_, err = tx.Exec(`DELETE FROM tag WHERE implicit = true`)
+	t.Log(err)
+	_, err = tx.Exec(`INSERT INTO tag (entry, tag, implicit)
+	SELECT distinct t.entry, td.isA, true
+	FROM tag t
+	JOIN tagDef td ON t.tag = td.tag`)
+	state.NoErr(t, err, "couldn't add infered tags")
 	// 2025-08-06: I changed the database structure for tags to a JSON-based tag system.
 	// Queries are WAY faster now. This function is a workaround before I update all code.
 	// But it takes a lot of times, so it's not ideal at all.
-	check2(tx.Exec(`WITH x AS (
-  SELECT entry, json_group_object(tag, 1) AS tags
-  FROM tag GROUP BY ENTRY
-)
-UPDATE entry AS e
-SET tags = coalesce((SELECT x.tags FROM x WHERE x.entry = e.id), '{}')`))
-	check(tx.Commit(), db.Close())
+	_, err = tx.Exec(`WITH x AS (
+		SELECT entry, json_group_object(tag, 1) AS tags
+		FROM tag GROUP BY ENTRY
+	)
+	UPDATE entry AS e
+	SET tags = coalesce((SELECT x.tags FROM x WHERE x.entry = e.id), '{}')`)
+	state.NoErr(t, err, err.Error())
+	state.NoErr(t, tx.Commit(), "transaction failed")
 }
 
 func idToPath(s string) (fname string, line string) {
@@ -368,68 +389,83 @@ func printFilepath(t *CliState) {
 }
 
 func list(t *CliState) {
-	rows := t.Rows
 	var data string
 	var in bytes.Buffer
+	var err error
+	rows := t.Rows
 	sh := exec.Command("less", "-r", "-")
 	sh.Dir = config.Directory
 	sh.Stdin = &in
 	sh.Stdout = os.Stdout
 	sh.Stderr = os.Stderr
+	defer rows.Close()
 	for rows.Next() {
-		check(rows.Scan(&data))
+		if rows.Scan(&data) != nil {
+			t.Log(err)
+			return
+		}
 		if data != "" {
-			check2(fmt.Fprint(&in, data, "\n"))
+			_, err = fmt.Fprint(&in, data, "\n")
+			if err != nil {
+				t.Log(err)
+				return
+			}
 		}
 	}
-	check(rows.Close(), sh.Run())
+	t.Log(sh.Run())
+	return
 }
 
 func toStdoutSpace(t *CliState) { toStdout(t, " ") }
 func toStdoutZero(t *CliState)  { toStdout(t, "\000") }
 func toStdout(t *CliState, sep string) {
+	var err error
 	rows := t.Rows
 	if rows == nil {
 		return
 	}
 	var data string
 	for rows.Next() {
-		check(rows.Scan(&data))
+		state.NoErr(t, rows.Scan(&data), "couldn't get data")
 		if data != "" {
-			check2(fmt.Fprint(os.Stdout, data, sep))
+			_, err = fmt.Fprint(os.Stdout, data, sep)
+			state.NoErr(t, err, "couldn't print to stdout")
 		}
 	}
-	check(rows.Close())
+	state.NoErr(t, rows.Close())
 }
 
-func initTUI(t *CliState) { tui.InitApp(&t.State) }
+func initTUI(t *CliState) { tui.InitApp(t.MainState) }
 
 func initVectors(t *CliState) {
-	err := word2vec.Train(&t.State)
+	err := word2vec.Train(t)
 	if err != nil {
-		panic(err)
+		t.Log(err)
+		fmt.Fprintln(os.Stderr, "Couldn't train vectors.")
+		os.Exit(1)
 	}
-	db := t.Conn()
-	check(word2vec.VectorizeEntriesTitle(db, false))
-	check(db.Close())
-	check(note.ParseAll(&t.State))
+	t.Log(word2vec.VectorizeEntriesTitle(t.DB(), false))
+	t.Log(note.ParseAll(t))
 }
 
 func editStopWords(t *CliState) {
 	fs.CD()
-	util.EditFile(fs.StopWordFile)
+	err := edit.File(fs.StopWordFile)
+	state.NoErr(t, err)
 	parseStopWords(t)
 }
 
 func editTagsTree(t *CliState) {
 	fs.CD()
-	util.EditFile(fs.TagFile)
+	err := edit.File(fs.TagFile)
+	state.NoErr(t, err)
 	parseTags(t)
 }
 
 func pdfAnnots(t *CliState) {
+	_ = t.DB().Close()
 	sh := exec.Command("pdfannots", "--format", "json", t.Args[0])
-	sh.Dir = t.RunDirectory
+	sh.Dir = t.RunDirectory()
 	var bufOut bytes.Buffer
 	sh.Stdout = &bufOut
 	sh.Stdin = os.Stdin
@@ -440,7 +476,7 @@ func pdfAnnots(t *CliState) {
 		t.Log(err)
 		os.Exit(1)
 	}
-	db := t.Conn()
+	db := t.DB()
 	_, err = db.Exec(`INSERT INTO pdf_annots
 	(entry, text, color, page_label, page, class)
 	SELECT
@@ -455,8 +491,14 @@ func pdfAnnots(t *CliState) {
 		fmt.Println("Encountered some issue, sorry.")
 		t.Log(err)
 	}
-	err = db.Close()
+}
+
+func confirmUser(msg string) bool {
+	fmt.Println(msg, "(y/N)")
+	var input string
+	_, err := fmt.Scanln(&input)
 	if err != nil {
-		t.Log(err)
+		return false
 	}
+	return strings.TrimSpace(input) == "y"
 }

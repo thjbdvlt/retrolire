@@ -17,15 +17,15 @@ const rowFilters = 3
 const rowCatalogue = 0
 
 // InitApp - Initialize the TUI application
-func InitApp(t *state.State) {
+func InitApp(t *state.MainState) {
 	tview.Styles = tview.Theme{
 		PrimitiveBackgroundColor: tcell.ColorWhite,
 		PrimaryTextColor:         tcell.ColorBlack,
 	}
 	ui := &UI{
-		App:    tview.NewApplication(),
-		State:  t,
-		styles: style.FromConfig(),
+		App:       tview.NewApplication(),
+		MainState: t,
+		styles:    style.FromConfig(),
 	}
 	ui.App.SetTitle("retrolire")
 	ui.Input = tview.NewInputField()

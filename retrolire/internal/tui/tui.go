@@ -15,10 +15,7 @@ import (
 	"retrolire/internal/tui/elements"
 	"retrolire/internal/tui/mode"
 	"retrolire/internal/tui/style"
-	"retrolire/internal/util"
 )
-
-var check = util.Check
 
 // UI - User interface
 type UI struct {
@@ -30,8 +27,12 @@ type UI struct {
 	styles  style.Styles
 	Input   *tview.InputField
 	*catalogue
-	*state.State
+	*state.MainState
 }
+
+func (UI) IsTui() bool                           { return true }
+func (ui UI) Exit()                              { ui.App.Stop() }
+func (ui UI) NoErr(err error, message ...string) { state.NoErr(ui, err, message...) }
 
 const magicPrefixCosine = '*'
 const magicPrefixTFS = '&'
@@ -60,11 +61,11 @@ func (ui *UI) operate() {
 	switch item.class {
 	// Some classes are edited
 	case obj.Person:
-		ui.App.Suspend(func() { ui.Log(actions.EditPerson(ui.State, item.main)) })
+		ui.App.Suspend(func() { ui.Log(actions.EditPerson(ui, item.main)) })
 	case obj.Entry:
-		ui.App.Suspend(func() { ui.Log(actions.EditEntry(ui.State, item.id)) })
+		ui.App.Suspend(func() { ui.Log(actions.EditEntry(ui, item.id)) })
 	case obj.Concept, obj.Quote, obj.Idea, obj.Heading, obj.Example:
-		ui.App.Suspend(func() { ui.Log(actions.EditEntryLine(ui.State, item.id, item.line)) })
+		ui.App.Suspend(func() { ui.Log(actions.EditEntryLine(ui, item.id, item.line)) })
 	// Some classes are not edited but added to the filters stack
 	case obj.Tag:
 		ui.addFilter("." + item.main)
@@ -80,7 +81,7 @@ func openCurrentItem(ui *UI) {
 	item := ui.current()
 	if item != nil {
 		ui.App.Suspend(func() {
-			ui.Log(actions.OpenEntryURL(ui.State, item.id))
+			ui.Log(actions.OpenEntryURL(ui, item.id))
 		})
 	}
 }

@@ -16,11 +16,11 @@ import (
 
 // CliState - Store options and results
 type CliState struct {
-	Opts        *opts.Opts // Parameters for query
-	Rows        *sql.Rows  // Result from Query
-	ID          state.ID   // Parsed result from FZF
-	Args        []string   // Positional arguments
-	state.State            // /!\ Not a pointer
+	Opts *opts.Opts // Parameters for query
+	Rows *sql.Rows  // Result from Query
+	ID   state.ID   // Parsed result from FZF
+	Args []string   // Positional arguments
+	*state.MainState
 }
 
 type cliCommand struct {
@@ -31,9 +31,10 @@ type cliCommand struct {
 }
 
 func pickOneID(t *CliState) bool {
+	var err error
 	var code int
 	// Pick something
-	res, code := pick.Pick(t.Rows, t.Opts.Fzf)
+	res, code := pick.Pick(t, t.Rows, t.Opts.Fzf)
 	// Ensure something has been picker
 	if len(res) == 0 || code != 0 {
 		t.ID = state.ID{}
@@ -55,21 +56,22 @@ func pickOneID(t *CliState) bool {
 	}
 	// Update last pick if any (and if it's an entry)
 	if t.Opts.TextObj && entryID != "" {
-		db := t.Conn()
-		check2(db.Exec(`UPDATE entry
+		db := t.DB()
+		_, err = db.Exec(`UPDATE entry
 SET lastpick = unixepoch('now')
-WHERE id = ?`, entryID))
-		check(db.Close())
+WHERE id = ?`, entryID)
+		t.Log(err)
 	}
 	return true
 }
 
 // Call - Parse arguments and call command
-func Call(st *state.State, args []string) {
+func Call(st *state.MainState, args []string) {
 	var err error
 	var c cliCommand
-	t := &CliState{State: *st}
-	args, t.Opts = opts.Parse(args)
+	t := &CliState{MainState: st}
+	args, t.Opts, err = opts.Parse(args)
+	state.NoErr(t, err, "failed to parse command line options")
 	args, c = getCommandFromArgs(args, t.Opts)
 	na := c.nArgs
 	if len(args) < na {
@@ -91,11 +93,10 @@ func Call(st *state.State, args []string) {
 		}
 		filterArgs := args[nReq:]
 		stmt, params := selectStmt.BuildSelect(stmtParams, filterArgs)
-		db := t.Conn()
+		db := t.DB()
 		t.Rows, err = db.Query(stmt, params...)
-		check(db.Close())
-		check(err)
-		check(t.Rows.Err())
+		state.NoErr(t, err, "couldn't get data")
+		state.NoErr(t, t.Rows.Err(), "couldn't get data")
 		if c.pick {
 			picked := pickOneID(t)
 			if !picked {

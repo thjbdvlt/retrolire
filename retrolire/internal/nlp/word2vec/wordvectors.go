@@ -104,6 +104,7 @@ func MostSimilarFromDB(db *sql.DB, word string, n int) ([]string, error) {
 	WHERE vec
 	MATCH (SELECT vec FROM vec_word WHERE word = ?)
 	AND k = ?`, word, n)
+	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -173,10 +174,9 @@ func insertVectors(db *sql.DB, vectors map[string]Vector, dim int) error {
 }
 
 // InitVectors - Initialize the vectors table in the database if it doesn't exists.
-func InitVectors(t *state.State, force bool) error {
+func InitVectors(t state.State, force bool) error {
 	var err error
-	db := t.Conn()
-	defer db.Close()
+	db := t.DB()
 	// Get no value from the table, just to check if there's any error
 	if db.QueryRow(`SELECT vec FROM vec_word LIMIT 0`).Err() == nil && !force {
 		return db.Close()
@@ -207,7 +207,7 @@ func InitVectors(t *state.State, force bool) error {
 		return err
 	}
 	t.Log(errors.New("word vectors database successfully created"))
-	return db.Close()
+	return nil
 }
 
 // VectorizeEntriesTitle - Vectories entries with NULL value as vec

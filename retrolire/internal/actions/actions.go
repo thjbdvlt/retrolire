@@ -3,7 +3,6 @@ package actions
 
 import (
 	"bytes"
-	"database/sql"
 	"errors"
 	"os/exec"
 	"path/filepath"
@@ -16,12 +15,11 @@ import (
 	"retrolire/internal/note"
 	"retrolire/internal/state"
 	"retrolire/internal/util"
+	"retrolire/internal/edit"
 )
 
-type connector = state.Connector
-
 // EditEntryLine - Edit an entry's note at a specific line (line can be integer/string)
-func EditEntryLine(cn connector, id string, line any) error {
+func EditEntryLine(t state.State, id string, line any) error {
 	if id == "" {
 		return errors.New("no id")
 	}
@@ -38,17 +36,17 @@ func EditEntryLine(cn connector, id string, line any) error {
 	default:
 		return errors.New("unsupported type for parameter line")
 	}
-	util.EditFileLine(fname, lineString)
-	return note.Parse([]string{id}, []int64{0}, cn)
+	edit.FileLine(fname, lineString)
+	return note.Parse(t, []string{id}, []int64{0})
 }
 
 // EditEntry - Edit an entry's note
-func EditEntry(cn connector, id string) error {
-	return EditEntryLine(cn, id, "1")
+func EditEntry(t state.State, id string) error {
+	return EditEntryLine(t, id, "1")
 }
 
 // EditPerson - Edit a person's note
-func EditPerson(cn connector, name string) error {
+func EditPerson(t state.State, name string) error {
 	var err error
 	root := fs.Root()
 	err = fs.CreateDirectory(root, fs.PeopleDirectoryName)
@@ -60,31 +58,31 @@ func EditPerson(cn connector, name string) error {
 		return err
 	}
 	filepath := filepath.Join(fs.PeopleDirectoryName, fs.ToFilename(name))
-	util.EditFile(filepath + config.Ext)
-	return note.Parse([]string{filepath}, []int64{0}, cn)
+	edit.File(filepath + config.Ext)
+	return note.Parse(t, []string{filepath}, []int64{0})
 }
 
 // DeleteEntry - Delete an entry. This function don't ask for confirmation.
-func DeleteEntry(cn connector, id string) error {
+func DeleteEntry(t state.State, id string) error {
 	stmts := []string{
 		`DELETE FROM entry WHERE id = ?`,
 		`DELETE FROM tag WHERE entry = ?`,
 		`DELETE FROM textobj WHERE entry = ?`,
 	}
-	db := cn.Conn()
+	db := t.DB()
 	for _, i := range stmts {
 		_, err := db.Exec(i, id)
 		if err != nil {
 			return err
 		}
 	}
-	return db.Close()
+	return nil
 }
 
 // UpdateEntryField - Update an entry's field value
-func UpdateEntryField(cn connector, id string, field string) error {
+func UpdateEntryField(t state.State, id string, field string) error {
 	var err error
-	db := cn.Conn()
+	db := t.DB()
 	path := "$." + field
 	row := db.QueryRow(`SELECT json_type(csl -> ?) = 'text' FROM entry WHERE id = ?`, path, id)
 	var isText bool
@@ -114,23 +112,21 @@ func UpdateEntryField(cn connector, id string, field string) error {
 	if err = db.Close(); err != nil {
 		return err
 	}
-	value = util.EditTemp(value)
-	db = cn.Conn()
+	value, err = edit.Temp(value)
+	state.NoErr(t, err)
+	db = t.DB()
 	_, err = db.Exec(stmtTo, path, strings.TrimSpace(string(value)), id)
 	if err != nil {
 		return err
 	}
-	return db.Close()
+	return nil
 }
 
 // GetEntryValue - Get the value of a field for an entry
-func GetEntryValue(cn connector, id string, field string) (string, error) {
+func GetEntryValue(t state.State, id string, field string) (string, error) {
 	var err error
-	db := cn.Conn()
+	db := t.DB()
 	row := db.QueryRow(`SELECT coalesce(csl ->> ?, '') FROM entry WHERE id = ?`, field, id)
-	if err = db.Close(); err != nil {
-		return "", err
-	}
 	var data string
 	if err = row.Err(); err != nil {
 		return "", err
@@ -142,17 +138,21 @@ func GetEntryValue(cn connector, id string, field string) (string, error) {
 }
 
 // Head - Get the head representation of an entry (title / author)
-func Head(cn connector, id string) string {
-	db := cn.Conn()
+func Head(t state.State, id string) (string, error) {
+	var err error
+	db := t.DB()
 	row := db.QueryRow(`SELECT head FROM entry WHERE id = ?`, id)
 	var head string
-	util.Check(row.Scan(&head), db.Close())
-	return head
+	err = row.Scan(&head)
+	if err != nil {
+		return "", err
+	}
+	return head, nil
 }
 
 // OpenEntryURL - Open the URL of an Entry
-func OpenEntryURL(cn connector, id string) error {
-	url, err := GetEntryValue(cn, id, "URL")
+func OpenEntryURL(t state.State, id string) error {
+	url, err := GetEntryValue(t, id, "URL")
 	if err != nil {
 		return err
 	}
@@ -166,8 +166,8 @@ func OpenEntryURL(cn connector, id string) error {
 }
 
 // UpdateEntryTags - Update an entry's set of tags
-func UpdateEntryTags(cn connector, id string, tags []string, deleteTags bool) error {
-	db := cn.Conn()
+func UpdateEntryTags(t state.State, id string, tags []string, deleteTags bool) error {
+	db := t.DB()
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -208,12 +208,12 @@ SELECT json_group_object(tag, 1) FROM tag WHERE entry = ?), '{}') where id = ?`,
 	if err != nil {
 		return err
 	}
-	return db.Close()
+	return nil
 }
 
 // EditEntryTags - Edit entry's tag in config.Editor
-func EditEntryTags(cn connector, id string) error {
-	db := cn.Conn()
+func EditEntryTags(t state.State, id string) error {
+	db := t.DB()
 	var tags []byte
 	var err error
 	row := db.QueryRow(`SELECT
@@ -226,10 +226,9 @@ WHERE entry = $1`, id)
 	if err = row.Scan(&tags); err != nil {
 		return err
 	}
-	if err = db.Close(); err != nil {
-		return err
-	}
-	tags = util.EditTemp(tags)
+	_ = db.Close() // Close database while editing
+	tags, err = edit.Temp(tags)
+	state.NoErr(t, err)
 	newTags := strings.Split(string(tags), "\n")
 	for i, tag := range newTags {
 		newTags[i] = strings.TrimSpace(tag)
@@ -237,17 +236,17 @@ WHERE entry = $1`, id)
 	newTags = slices.DeleteFunc(newTags, func(s string) bool {
 		return s == ""
 	})
-	return UpdateEntryTags(cn, id, newTags, true)
+	return UpdateEntryTags(t, id, newTags, true)
 }
 
 // GetTags - Get a list of tags
-func GetTags(db *sql.DB) []string {
-	tags, _ := util.GetSomethingAsSlice(db, `SELECT DISTINCT tag FROM tag`)
+func GetTags(t state.State) []string {
+	tags, _ := util.GetSomethingAsSlice(t.DB(), `SELECT DISTINCT tag FROM tag`)
 	return tags
 }
 
 // GetFields - Get a list of fields (CSL variables)
-func GetFields(db *sql.DB) []string {
-	fields, _ := util.GetSomethingAsSlice(db, `SELECT DISTINCT x.key FROM entry, json_each(csl) as x`)
+func GetFields(t state.State) []string {
+	fields, _ := util.GetSomethingAsSlice(t.DB(), `SELECT DISTINCT x.key FROM entry, json_each(csl) as x`)
 	return fields
 }

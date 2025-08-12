@@ -134,9 +134,7 @@ func (ui *UI) editTagEntry() {
 }
 
 func (ui *UI) chooseTag() {
-	db := ui.Conn()
-	tags := actions.GetTags(db)
-	ui.Log(db.Close())
+	tags := actions.GetTags(ui)
 	ui.stock = fromSlice(tags, obj.Tag)
 	ui.display(ui.stock)
 	ui.searchOnKey(true)
@@ -151,9 +149,7 @@ func (ui *UI) chooseClass() {
 }
 
 func (ui *UI) chooseVar() {
-	db := ui.Conn()
-	fields := actions.GetFields(db)
-	ui.Log(db.Close())
+	fields := actions.GetFields(ui)
 	ui.stock = fromSlice(fields, obj.Variable)
 	ui.display(ui.stock)
 	ui.searchOnKey(true)

@@ -7,33 +7,70 @@ import (
 	"log"
 	"os"
 
+	sqlite_vec "github.com/asg017/sqlite-vec-go-bindings/cgo"
 	_ "github.com/mattn/go-sqlite3"
 
 	"retrolire/internal/config"
 	"retrolire/internal/fs"
 )
 
-// Connector - Something that can connect or reconnect to the database
-type Connector interface{ Conn() *sql.DB }
-
-// State - Main program state, mostly used to (re)connect to the database
-type State struct {
-	dbChecked    bool
-	logger       *log.Logger
-	RunDirectory string
-	isTui        bool // TODO
+// State - Hold and gives program state informationso
+type State interface {
+	DB() *sql.DB
+	Log(err ...error)
+	IsTui() bool
+	Exit()
 }
 
-func NewState() *State {
+// State - Main program state, mostly used to (re)connect to the database
+type MainState struct {
+	db             *sql.DB
+	dbChecked      bool
+	logger         *log.Logger
+	startDirectory string
+}
+
+// RunDirectory - The directory when the program start
+func (s *MainState) RunDirectory() string {
+	return s.startDirectory
+}
+
+// IsTui - MainState by default is not a TUI.
+func (MainState) IsTui() bool { return false }
+
+// DB - Get a database connection, either existing or new.
+func (s *MainState) DB() *sql.DB {
+	err := s.db.Ping()
+	if err == nil {
+		return s.db
+	}
+	s.db = s.conn()
+	return s.db
+}
+
+// NewState initialize the program state, holding connection and global informations
+func NewState(connect bool) *MainState {
+	sqlite_vec.Auto()
+	// Keep track on initial directory.
+	// This is required for command such as "add json" where argument is a file.
 	dir, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
-	return &State{RunDirectory: dir}
+	// Change to the retrolire directory.
+	// This avoid building paths laters, i.e. to the database.
+	fs.CD()
+	t := &MainState{startDirectory: dir}
+	// We usually will connect to the database just once.
+	// In few case, we don't want to connect, e.g. because the database needs to be create.
+	if connect {
+		t.db = t.conn()
+	}
+	return t
 }
 
 // Conn - Connect to the database. This function calls log.Fatal if connection fails.
-func (s *State) Conn() *sql.DB {
+func (s *MainState) conn() *sql.DB {
 	err := os.Chdir(config.Directory)
 	if err != nil {
 		fmt.Println("Cannot open directory:", config.Directory)
@@ -76,7 +113,10 @@ func (s *State) Conn() *sql.DB {
 	return db
 }
 
-func (s *State) initLogger() {
+// Exit - Exit main program state, closing database.
+func (s *MainState) Exit() {}
+
+func (s *MainState) initLogger() {
 	f, err := os.OpenFile(fs.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		panic(err)
@@ -84,7 +124,7 @@ func (s *State) initLogger() {
 	s.logger = log.New(f, "", log.Ldate|log.Ltime)
 }
 
-func (s *State) log(errs []error) {
+func (s *MainState) log(errs []error) {
 	if s.logger == nil {
 		s.initLogger()
 	}
@@ -95,7 +135,32 @@ func (s *State) log(errs []error) {
 	}
 }
 
-// Log - Log things to the log file
-func (s *State) Log(err ...error) {
+// Log - Log non-nil things to the log file.
+func (s *MainState) Log(err ...error) {
 	s.log(err)
+}
+
+// CloseDB - Close the database, if any.
+// This usually will be called only at the end of the program.
+func (s *MainState) CloseDB() {
+	if s.db != nil {
+		s.Log(s.db.Close())
+	}
+}
+
+// NoErr - Ensure that an error is nil.
+// If the error is not nil, log the error to the log file, exit the state, print a message.
+func NoErr(s State, err error, message ...string) {
+	if err != nil {
+		s.Log(err)
+		if s.DB() != nil {
+			s.Log(s.DB().Close())
+		}
+		s.Exit() // Before printing message to stderr, to ensure a clean screen
+		if len(message) == 0 {
+			message = []string{err.Error()}
+		}
+		fmt.Fprintln(os.Stderr, message)
+		os.Exit(1)
+	}
 }

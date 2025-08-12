@@ -10,8 +10,7 @@ import (
 // The history is a Work In Progress, i.e. it doesn't work very well.
 
 func (ui *UI) findSimilar(text string) {
-	db := ui.Conn()
-	defer db.Close()
+	db := ui.DB()
 	vectorizer := word2vec.NewVectorizer(db)
 	_, vector := vectorizer.Vectorize(text)
 	if vector == nil {
@@ -37,8 +36,7 @@ func (ui *UI) findSimilar(text string) {
 }
 
 func (ui *UI) findFts(text string) {
-	db := ui.Conn()
-	defer db.Close()
+	db := ui.DB()
 	rows, err := fts.TextToQuery(db, text)
 	if err != nil {
 		ui.Log(err)

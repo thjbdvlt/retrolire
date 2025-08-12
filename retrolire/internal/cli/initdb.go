@@ -6,16 +6,17 @@ import (
 
 	"retrolire/internal/fs"
 	"retrolire/internal/nlp"
+	"retrolire/internal/state"
 )
 
-func initDB(*CliState) {
+func initDB(t *CliState) {
 	var err error
 	var db *sql.DB
 	fs.CD()
 	db, err = sql.Open("sqlite3", fs.DBNAME)
-	check(err)
+	state.NoErr(t, err)
 	tx, err := db.Begin()
-	check(err)
+	state.NoErr(t, err)
 	for _, i := range []string{
 		// Entry is the main table
 		// The CSL variable holds bibliographic informations (author, title, publisher, ...)
@@ -222,7 +223,9 @@ BEGIN
 	SELECT json_group_object(tag, 1) FROM tag WHERE entry = NEW.entry), '{}') where id = NEW.entry;
 END`,
 	} {
-		check2(tx.Exec(i))
+		_, err = tx.Exec(i)
+		state.NoErr(t, err)
 	}
-	check(tx.Commit(), nlp.UpdateStopWords(db), db.Close())
+	state.NoErr(t, tx.Commit())
+	state.NoErr(t, nlp.UpdateStopWords(db))
 }

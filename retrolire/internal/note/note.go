@@ -205,9 +205,8 @@ func parseFile(psr parser, id string, fp string) error {
 }
 
 // Parse entries note
-func Parse(ids []string, lastedits []int64, cn state.Connector) error {
-	db := cn.Conn()
-	defer db.Close()
+func Parse(t state.State, ids []string, lastedits []int64) error {
+	db := t.DB()
 	update := make([]bool, len(ids))
 	tx, err := db.Begin()
 	if err != nil {
@@ -254,17 +253,19 @@ func Parse(ids []string, lastedits []int64, cn state.Connector) error {
 }
 
 // ParseAll - Parse all entries notes
-func ParseAll(t *state.State) error {
-	db := t.Conn()
+func ParseAll(t state.State) error {
+	db := t.DB()
 	var ids []string
 	var lastedits []int64
 	rows, err := db.Query(`SELECT id, 0 FROM entry`)
 	if err != nil {
 		return err
 	}
+	t.Log(rows.Close())
 	if err = rows.Err(); err != nil {
 		return err
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var id string
 		var lastedit int64
@@ -275,9 +276,5 @@ func ParseAll(t *state.State) error {
 		ids = append(ids, id)
 		lastedits = append(lastedits, lastedit)
 	}
-	err = db.Close()
-	if err != nil {
-		return err
-	}
-	return Parse(ids, lastedits, t)
+	return Parse(t, ids, lastedits)
 }

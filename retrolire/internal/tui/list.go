@@ -243,13 +243,15 @@ func fromRows(rows *sql.Rows) []*thing {
 		for rows.Next() {
 			b.Reset()
 			th := &thing{}
-			check(rows.Scan(&th.id, &th.line, &th.main, &th.least, &th.class))
-			b.WriteString(th.main)
-			b.WriteString("\n")
-			b.WriteString(th.least)
-			th.lower = strings.ToLower(b.String())
-			items = append(items, th)
-			n++
+			// There shouldn't be any errors. But if there are, just ignore for now.
+			if rows.Scan(&th.id, &th.line, &th.main, &th.least, &th.class) == nil {
+				b.WriteString(th.main)
+				b.WriteString("\n")
+				b.WriteString(th.least)
+				th.lower = strings.ToLower(b.String())
+				items = append(items, th)
+				n++
+			}
 		}
 	}
 	return items

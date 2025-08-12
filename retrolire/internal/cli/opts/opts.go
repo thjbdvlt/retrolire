@@ -6,7 +6,6 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"retrolire/internal/cli/help"
-	"retrolire/internal/util"
 )
 
 // Opts - Command line options
@@ -46,9 +45,12 @@ func initOpts() (*flag.FlagSet, *Opts) {
 }
 
 // Parse - Parse command line options. Returns positional arguments and options
-func Parse(args []string) ([]string, *Opts) {
+func Parse(args []string) ([]string, *Opts, error) {
 	fs, opts := initOpts()
-	util.Check(fs.Parse(args))
+	err := fs.Parse(args)
+	if err != nil {
+		return nil, nil, err
+	}
 	args = fs.Args()
-	return args, opts
+	return args, opts, nil
 }
