@@ -56,7 +56,7 @@ func parserRegexp(re *regexp.Regexp) func(string) (string, string, bool) {
 
 func initLineParsers() []lineParser {
 	return []lineParser{
-		// Markdown heading. No ATX-style because the note parsing is 100% line-based.
+		// Markdown heading. Only ATX-style because the note parsing is 100% line-based.
 		{
 			class: obj.Heading,
 			fn:    parserRegexp(regexp.MustCompile(`^#+ (.*)`)),
@@ -66,10 +66,14 @@ func initLineParsers() []lineParser {
 			class: obj.Quote,
 			fn:    parserPrefix("> "),
 		},
+		{
+			class: obj.Quote,
+			fn:    parserRegexp(regexp.MustCompile(`^["«]([^«"»]+)["»](.*)$`)),
+		},
 		// Pandoc's numbered example lists
 		{
 			class: obj.Example,
-			fn:    parserPrefix("(@) "),
+			fn:    parserRegexp(regexp.MustCompile(`\(@\w*\) (.*)`)),
 		},
 		// Concept definition parsing doesn't use Pandoc's style because of line-based parsing.
 		{
@@ -245,11 +249,7 @@ func Parse(t state.State, ids []string, lastedits []int64) error {
 			}
 		}
 	}
-	err = tx.Commit()
-	if err != nil {
-		return err
-	}
-	return nil
+	return tx.Commit()
 }
 
 // ParseAll - Parse all entries notes
