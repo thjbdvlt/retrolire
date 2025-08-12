@@ -18,7 +18,7 @@ const (
 	Heading
 	Concept
 	Quote
-	Idea
+	Commentary
 	Example
 	Florilege   // Not implemented yet
 	Compilation // Not implemented yet
@@ -38,7 +38,7 @@ func Names() []string {
 	names[Entry] = "entry"
 	names[Concept] = "concept"
 	names[Quote] = "quote"
-	names[Idea] = "idea"
+	names[Commentary] = "commentary"
 	names[Example] = "example"
 	names[Person] = "person"
 	names[Heading] = "heading"

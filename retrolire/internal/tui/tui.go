@@ -64,7 +64,7 @@ func (ui *UI) operate() {
 		ui.App.Suspend(func() { ui.Log(actions.EditPerson(ui, item.main)) })
 	case obj.Entry:
 		ui.App.Suspend(func() { ui.Log(actions.EditEntry(ui, item.id)) })
-	case obj.Concept, obj.Quote, obj.Idea, obj.Heading, obj.Example:
+	case obj.Concept, obj.Quote, obj.Commentary, obj.Heading, obj.Example:
 		ui.App.Suspend(func() { ui.Log(actions.EditEntryLine(ui, item.id, item.line)) })
 	// Some classes are not edited but added to the filters stack
 	case obj.Tag:

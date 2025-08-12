@@ -92,7 +92,7 @@ func initLineParsers() []lineParser {
 		},
 		// Everything that hasn't been parsed by something until the end is a generic "idea".
 		{
-			class: obj.Idea,
+			class: obj.Commentary,
 			fn:    func(line string) (string, string, bool) { return line, "", true },
 		},
 	}

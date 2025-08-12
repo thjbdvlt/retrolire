@@ -33,7 +33,7 @@ func FromConfig() Styles {
 		{obj.Entry, conf.ColorEntryID, conf.ColorEntry},
 		{obj.Concept, conf.ColorConceptID, conf.ColorConcept},
 		{obj.Quote, conf.ColorQuoteID, conf.ColorQuote},
-		{obj.Idea, conf.ColorIdeaID, conf.ColorIdea},
+		{obj.Commentary, conf.ColorIdeaID, conf.ColorIdea},
 		{obj.Example, conf.ColorExampleID, conf.ColorExample},
 		{obj.Heading, conf.ColorHeadingID, conf.ColorHeading},
 	} {
