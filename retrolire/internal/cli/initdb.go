@@ -52,6 +52,7 @@ func initDB(t *CliState) {
   lastpick   int  NOT NULL DEFAULT 0,
   title     text  GENERATED ALWAYS AS (coalesce(csl ->> 'title', '')),
 	vec       blob,
+	vec_title blob,
   head      text  GENERATED ALWAYS AS (title || CHAR(10) || '    ' || author || '  @' || id)
 )`,
 		// Textobj is that table that holds information about quotes, concepts, ideas, ...,

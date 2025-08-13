@@ -116,12 +116,13 @@ func (p parser) extractPageNumber(line string) string {
 }
 
 type parseStatements struct {
-	insert     *sql.Stmt
-	delete     *sql.Stmt
-	insertFts  *sql.Stmt
-	deleteFts  *sql.Stmt
-	update     *sql.Stmt
-	updateTags *sql.Stmt // SQLite3 (SQL?) can't update multipe columns at once
+	insert         *sql.Stmt
+	delete         *sql.Stmt
+	insertFts      *sql.Stmt
+	deleteFts      *sql.Stmt
+	update         *sql.Stmt
+	updateTags     *sql.Stmt // SQLite3 (SQL?) can't update multipe columns at once
+	updateVecEntry *sql.Stmt
 }
 
 func initStatement(s *parseStatements, tx *sql.Tx) error {
@@ -151,6 +152,10 @@ func initStatement(s *parseStatements, tx *sql.Tx) error {
 		return err
 	}
 	s.updateTags, err = tx.Prepare(`UPDATE entry SET tags = ? WHERE id = ?`)
+	if err != nil {
+		return err
+	}
+	s.updateVecEntry, err = tx.Prepare(`UPDATE entry set vec = ? WHERE id =?`)
 	if err != nil {
 		return err
 	}
@@ -222,6 +227,7 @@ func parseFile(psr parser, id string, fp string) error {
 	scanner := bufio.NewScanner(file)
 
 	var lineobjects []lineObject
+	var vectors []*word2vec.Vector
 
 	n := 0
 	nLineObjects := 0
@@ -264,6 +270,7 @@ func parseFile(psr parser, id string, fp string) error {
 				var bvec []byte
 				tokens, vector := psr.vectorizer.Vectorize(main)
 				if vector != nil {
+					vectors = append(vectors, vector)
 					bvec, err = vector.AsBytes()
 					if err != nil {
 						bvec = nil
@@ -309,6 +316,17 @@ func parseFile(psr parser, id string, fp string) error {
 	}
 	_, err = psr.updateTags.Exec(jTags, id)
 
+	// Update entry's vector (average of all textobjs)
+	var bvec []byte
+	if len(vectors) > 0 {
+		bvec, err = word2vec.Avg(vectors).AsBytes()
+		if err == nil {
+			_, err = psr.updateVecEntry.Exec(bvec, id)
+			if err != nil {
+				return err
+			}
+		}
+	}
 	return err
 }
 

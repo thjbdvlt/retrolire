@@ -62,6 +62,12 @@ func (ui *UI) displayFromText(text string) {
 	}
 }
 
+func (ui *UI) filters() []string {
+	text := ui.Filters.GetText()
+	text = strings.TrimSpace(text)
+	return strings.Split(text, " ")
+}
+
 // TODO: It could depends of previous command? E.g. "update".
 func (ui *UI) operate() {
 	item := ui.current()

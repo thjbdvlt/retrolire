@@ -41,7 +41,8 @@ func (sl SelectStmt) BuildSelect(args []any, filtersDesc []string, t Thesauruser
 		filterSearch,
 	}
 	stmt := []string{sl.stmt}
-	params := append(slices.Clone(sl.params), args...)
+	// params := append(slices.Clone(sl.params), args...)
+	params := slices.Clone(sl.params)
 	clauses := slices.Clone(sl.clauses)
 	if len(filtersDesc) > 0 {
 		filterClauses, filterParams := Parse(filtersDesc, filtersFuncs, thesaurus)
@@ -50,6 +51,7 @@ func (sl SelectStmt) BuildSelect(args []any, filtersDesc []string, t Thesauruser
 		clauses = append(clauses, ")")
 		params = append(params, filterParams...)
 	}
+	params = append(params, args...)
 	if len(clauses) > 0 {
 		clauses[0] = "WHERE"
 		stmt = append(stmt, clauses...)
@@ -211,6 +213,7 @@ func TuiStmtCosine() *SelectStmt {
 // TuiStmtL2 - Word vectors ranking statement
 func TuiStmtL2() *SelectStmt {
 	return &SelectStmt{
+		// FIXME: Required param is at the end
 		stmt:            `SELECT e.id, e.line, e.main, e.least as least, class from obj e`,
 		clauses:         []string{"WHERE", "vec IS NOT NULL"},
 		orderBy:         `ORDER BY vec_distance_L2(e.vec, ?)`,

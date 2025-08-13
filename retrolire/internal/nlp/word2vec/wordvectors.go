@@ -217,7 +217,7 @@ func VectorizeEntriesTitle(db *sql.DB, onlyNull bool) error {
 	if err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare(`UPDATE entry SET vec = ? WHERE id = ?`)
+	stmt, err := tx.Prepare(`UPDATE entry SET vec_title = ? WHERE id = ?`)
 	if err != nil {
 		return err
 	}
