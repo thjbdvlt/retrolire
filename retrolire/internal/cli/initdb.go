@@ -3,8 +3,11 @@ package cli
 
 import (
 	"database/sql"
+	"fmt"
+	"os"
 
-	"retrolire/internal/fs"
+	"retrolire/internal/config"
+	"retrolire/internal/files"
 	"retrolire/internal/nlp"
 	"retrolire/internal/state"
 )
@@ -12,8 +15,17 @@ import (
 func initDB(t *CliState) {
 	var err error
 	var db *sql.DB
-	fs.CD()
-	db, err = sql.Open("sqlite3", fs.DBNAME)
+	// Create retrolire directory if it doesn't exists.
+	// I do this without using `state.NoErr` because log file is in retrolire directory.
+	if !files.FileExists(config.Directory) {
+		err := os.Mkdir(config.Directory, 0750)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "couldn't create retrolire directory")
+			os.Exit(1)
+		}
+	}
+	t.CD()
+	db, err = sql.Open("sqlite3", files.DBNAME)
 	state.NoErr(t, err)
 	tx, err := db.Begin()
 	state.NoErr(t, err)
@@ -35,7 +47,6 @@ func initDB(t *CliState) {
   id        text  PRIMARY KEY NOT NULL,
   csl      jsonb  NOT NULL,
 	tags     jsonb  NOT NULL DEFAULT '{}',
-	note_tags jsonb NOT NULL DEFAULT '{}',
   author    text  NOT NULL DEFAULT '',
   lastedit   int  NOT NULL DEFAULT 0, -- Not (unixepoch('now'))!
   lastpick   int  NOT NULL DEFAULT 0,
@@ -229,5 +240,5 @@ END`,
 		state.NoErr(t, err)
 	}
 	state.NoErr(t, tx.Commit())
-	state.NoErr(t, nlp.UpdateStopWords(db))
+	state.NoErr(t, nlp.UpdateStopWords(t))
 }

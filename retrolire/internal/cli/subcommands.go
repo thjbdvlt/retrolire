@@ -2,7 +2,6 @@
 package cli
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"os"
@@ -16,7 +15,7 @@ import (
 	"retrolire/internal/cli/pick"
 	"retrolire/internal/config"
 	"retrolire/internal/edit"
-	"retrolire/internal/fs"
+	"retrolire/internal/files"
 	"retrolire/internal/nlp"
 	"retrolire/internal/nlp/word2vec"
 	"retrolire/internal/note"
@@ -166,7 +165,7 @@ func readFromFileOrFile(t *CliState, path string) []byte {
 	if path == "-" {
 		return readFromStdin(t)
 	}
-	if !fs.FileExists(path) {
+	if !files.FileExists(path) {
 		fmt.Fprintln(os.Stderr, "File not found:", path)
 		os.Exit(0)
 		return nil
@@ -184,7 +183,7 @@ func readFromFileOrFile(t *CliState, path string) []byte {
 		os.Exit(0)
 		return nil
 	}
-	fs.CD()
+	files.CD()
 	return data
 }
 
@@ -271,18 +270,9 @@ func parse(t *CliState) {
 	state.NoErr(t, note.Parse(t, ids, lastedits), "failed to parse notes")
 }
 
-func getIndent(b string) int {
-	for i, v := range b {
-		if v != ' ' {
-			return i
-		}
-	}
-	return 0
-}
-
 func parseStopWords(t *CliState) {
 	db := t.DB()
-	err := nlp.UpdateStopWords(db)
+	err := nlp.UpdateStopWords(t)
 	if err != nil {
 		panic(err)
 	}
@@ -290,82 +280,6 @@ func parseStopWords(t *CliState) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func parseTags(t *CliState) {
-	// Open the tag file
-	root := fs.Root()
-	file, err := root.Open(fs.TagFile)
-	state.NoErr(t, err, "couldn't open tag file")
-	t.Log(root.Close())
-	// Two slices to store line contents and indent levels
-	lines := []string{}
-	indents := []int{}
-	// Iterate over the tag file lines. Each line defines a tag
-	scanner := bufio.NewScanner(file)
-	var maxIndent int
-	n := 0
-	for scanner.Scan() {
-		line := scanner.Text()
-		indent := getIndent(line) // Indent = hierarchy depth
-		// Increase maxIndent, needed to build the tree slice
-		if indent > maxIndent {
-			maxIndent = indent
-		}
-		lines = append(lines, strings.TrimSpace(line))
-		indents = append(indents, indent)
-		n++
-	}
-	tree := make([]string, maxIndent+1) // Store tag hierarchy
-	// Delete the tagDef table that describe the tag hierarchy
-	db := t.DB()
-	tx, err := db.Begin()
-	state.NoErr(t, err, err.Error())
-	_, err = tx.Exec(`DELETE FROM tagDef`)
-	state.NoErr(t, err, err.Error())
-	// Re-Create the hierarchy
-	stmt, err := tx.Prepare(`INSERT INTO tagDef (tag, isA) VALUES (?, ?)`)
-	state.NoErr(t, err, "couldn't add tag hierarchy")
-	for i, line := range lines {
-		// Aliases
-		if strings.Contains(line, "=") {
-			s := strings.Split(line, "=")
-			if len(s) > 1 {
-				name := strings.TrimSpace(s[0])
-				for _, alias := range s[1:] {
-					_, err = stmt.Exec(name, strings.TrimSpace(alias))
-					t.Log(err)
-				}
-				line = name // Remove aliases for hierarchy
-			}
-		}
-		// Hierarchy
-		indent := indents[i]
-		tree[indent] = line
-		for y := 0; y < indent; y++ {
-			_, err = stmt.Exec(line, tree[y])
-			t.Log(err)
-		}
-	}
-	// TODO: Modify the QUERY instead of data
-	_, err = tx.Exec(`DELETE FROM tag WHERE implicit = true`)
-	t.Log(err)
-	_, err = tx.Exec(`INSERT INTO tag (entry, tag, implicit)
-	SELECT distinct t.entry, td.isA, true
-	FROM tag t
-	JOIN tagDef td ON t.tag = td.tag`)
-	state.NoErr(t, err, "couldn't add infered tags")
-	// 2025-08-06: I changed the database structure for tags to a JSON-based tag system.
-	// Queries are WAY faster now. This function is a workaround before I update all code.
-	// But it takes a lot of times, so it's not ideal at all.
-	_, err = tx.Exec(`WITH x AS (
-		SELECT entry, json_group_object(tag, 1) AS tags
-		FROM tag GROUP BY ENTRY
-	)
-	UPDATE entry AS e
-	SET tags = coalesce((SELECT x.tags FROM x WHERE x.entry = e.id), '{}')`)
-	state.NoErr(t, err, err.Error())
-	state.NoErr(t, tx.Commit(), "transaction failed")
 }
 
 func idToPath(s string) (fname string, line string) {
@@ -450,17 +364,15 @@ func initVectors(t *CliState) {
 }
 
 func editStopWords(t *CliState) {
-	fs.CD()
-	err := edit.File(fs.StopWordFile)
+	files.CD()
+	err := edit.File(files.StopWordFile)
 	state.NoErr(t, err)
 	parseStopWords(t)
 }
 
 func editTagsTree(t *CliState) {
-	fs.CD()
-	err := edit.File(fs.TagFile)
-	state.NoErr(t, err)
-	parseTags(t)
+	files.CD()
+	state.NoErr(t, edit.File(files.TagFile))
 }
 
 func pdfAnnots(t *CliState) {

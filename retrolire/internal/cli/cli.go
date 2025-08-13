@@ -66,10 +66,10 @@ WHERE id = ?`, entryID)
 }
 
 // Call - Parse arguments and call command
-func Call(st *state.MainState, args []string) {
+func Call(mainState *state.MainState, args []string) {
 	var err error
 	var c cliCommand
-	t := &CliState{MainState: st}
+	t := &CliState{MainState: mainState}
 	args, t.Opts, err = opts.Parse(args)
 	state.NoErr(t, err, "failed to parse command line options")
 	args, c = getCommandFromArgs(args, t.Opts)
@@ -82,7 +82,7 @@ func Call(st *state.MainState, args []string) {
 	args = args[na:]
 	if c.stmt != nil {
 		selectStmt := c.stmt()
-		nReq := selectStmt.NRequiredParams
+		nReq := selectStmt.NRequiredParams()
 		if len(args) < nReq {
 			fmt.Fprintf(os.Stderr, "Requires %d arguments", na+nReq)
 			os.Exit(1)
@@ -92,7 +92,7 @@ func Call(st *state.MainState, args []string) {
 			stmtParams[i] = args[i]
 		}
 		filterArgs := args[nReq:]
-		stmt, params := selectStmt.BuildSelect(stmtParams, filterArgs)
+		stmt, params := selectStmt.BuildSelect(stmtParams, filterArgs, t)
 		db := t.DB()
 		t.Rows, err = db.Query(stmt, params...)
 		state.NoErr(t, err, "couldn't get data")

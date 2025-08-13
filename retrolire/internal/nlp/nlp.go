@@ -3,19 +3,19 @@ package nlp
 
 import (
 	"bufio"
-	"database/sql"
 	"strings"
 
-	"retrolire/internal/fs"
+	"retrolire/internal/files"
+	"retrolire/internal/state"
 )
 
 // UpdateStopWords stop word file and update database
-func UpdateStopWords(db *sql.DB) error {
-	root := fs.Root()
-	if !fs.FileExists(fs.StopWordFile) {
+func UpdateStopWords(t state.State) error {
+	root := t.Root()
+	if !files.FileExists(files.StopWordFile) {
 		return nil // stopword file is optional
 	}
-	file, err := root.Open(fs.StopWordFile)
+	file, err := root.Open(files.StopWordFile)
 	if err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ func UpdateStopWords(db *sql.DB) error {
 	for scanner.Scan() {
 		stopwords = append(stopwords, strings.TrimSpace(scanner.Text()))
 	}
-	tx, err := db.Begin()
+	tx, err := t.DB().Begin()
 	if err != nil {
 		return err
 	}

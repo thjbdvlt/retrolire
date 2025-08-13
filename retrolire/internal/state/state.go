@@ -1,4 +1,4 @@
-// Package state - Store program state and manage database connection
+// Package state - Store program state, manage database connection and directories
 package state
 
 import (
@@ -8,23 +8,27 @@ import (
 	"os"
 	"strings"
 
-	sqlite_vec "github.com/asg017/sqlite-vec-go-bindings/cgo"
-	_ "github.com/mattn/go-sqlite3"
 	"golang.design/x/clipboard"
 
+	sqlite_vec "github.com/asg017/sqlite-vec-go-bindings/cgo"
+	_ "github.com/mattn/go-sqlite3"
+
+	"retrolire/internal/aka"
 	"retrolire/internal/config"
-	"retrolire/internal/fs"
+	"retrolire/internal/files"
 )
 
-// State - Hold and gives program state informationso
+// State - Hold and gives program state informations
 type State interface {
 	DB() *sql.DB
 	Log(err ...error)
 	IsTui() bool
 	Exit()
+	Root() *os.Root
+	Thesaurus() *aka.Thesaurus
 }
 
-// State - Main program state, mostly used to (re)connect to the database
+// MainState - Main program state, mostly used to (re)connect to the database
 type MainState struct {
 	db             *sql.DB
 	dbChecked      bool
@@ -32,6 +36,8 @@ type MainState struct {
 	startDirectory string
 	clip           bool
 	clipInit       bool
+	root           *os.Root
+	thesaurus      *aka.Thesaurus
 }
 
 // RunDirectory - The directory when the program start
@@ -67,7 +73,6 @@ func NewState(connect bool) *MainState {
 	}
 	// Change to the retrolire directory.
 	// This avoid building paths laters, i.e. to the database.
-	fs.CD()
 	t := &MainState{startDirectory: dir}
 	// We usually will connect to the database just once.
 	// In few case, we don't want to connect, e.g. because the database needs to be create.
@@ -95,7 +100,7 @@ func (s *MainState) conn() *sql.DB {
 		fmt.Println("Cannot open directory:", config.Directory)
 		os.Exit(1)
 	}
-	db, err := sql.Open("sqlite3", fs.DBNAME)
+	db, err := sql.Open("sqlite3", files.DBNAME)
 	if err != nil {
 		fmt.Println("Error opening database in directory", config.Directory)
 		os.Exit(1)
@@ -132,11 +137,8 @@ func (s *MainState) conn() *sql.DB {
 	return db
 }
 
-// Exit - Exit main program state, closing database.
-func (s *MainState) Exit() {}
-
 func (s *MainState) initLogger() {
-	f, err := os.OpenFile(fs.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+	f, err := os.OpenFile(files.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		panic(err)
 	}
@@ -154,7 +156,7 @@ func (s *MainState) log(errs []error) {
 	}
 }
 
-// Log - Log non-nil things to the log file.
+// Log - Log errors to the log file but don't end program. For fatal errors, use NoErr.
 func (s *MainState) Log(err ...error) {
 	s.log(err)
 }
@@ -162,9 +164,32 @@ func (s *MainState) Log(err ...error) {
 // CloseDB - Close the database, if any.
 // This usually will be called only at the end of the program.
 func (s *MainState) CloseDB() {
+	if s.db != nil && s.db.Ping() == nil {
+		s.Log(s.db.Close())
+	}
+}
+
+// Exit - End the program
+func (s *MainState) Exit() {
 	if s.db != nil {
 		s.Log(s.db.Close())
 	}
+	if s.root != nil {
+		s.Log(s.root.Close())
+	}
+}
+
+// Root - Open retrolire directory as root
+func (s *MainState) Root() *os.Root {
+	var err error
+	root, err := os.OpenRoot(config.Directory)
+	NoErr(s, err, "couldn't open retrolire directory", config.Directory)
+	return root
+}
+
+// CD - Change to retrolire directory
+func (s *MainState) CD() {
+	NoErr(s, os.Chdir(config.Directory))
 }
 
 // NoErr - Ensure that an error is nil.
@@ -172,10 +197,6 @@ func (s *MainState) CloseDB() {
 func NoErr(s State, err error, message ...string) {
 	if err != nil {
 		s.Log(err)
-		db := s.DB()
-		if db != nil && db.Ping() == nil {
-			s.Log(db.Close())
-		}
 		s.Exit() // Before printing message to stderr, to ensure a clean screen
 		if len(message) == 0 {
 			message = []string{err.Error()}
@@ -183,4 +204,12 @@ func NoErr(s State, err error, message ...string) {
 		fmt.Fprintln(os.Stderr, strings.Join(message, " "))
 		os.Exit(1)
 	}
+}
+
+func (s *MainState) Thesaurus() *aka.Thesaurus {
+	if s.thesaurus == nil {
+		s.thesaurus = aka.NewThesaurus()
+		s.Log(aka.InitThesaurus(s.thesaurus, s.Root()))
+	}
+	return s.thesaurus
 }

@@ -27,7 +27,7 @@ func (ui *UI) displayFromFilters(text string) {
 
 func (ui *UI) getEntriesFromFilters(filters []string) []*thing {
 	db := ui.DB()
-	stmt, params := sqlmaker.TuiStmtOrderBy().BuildSelect([]any{}, filters)
+	stmt, params := sqlmaker.TuiStmtOrderBy().BuildSelect([]any{}, filters, ui)
 	rows, err := db.Query(stmt, params...)
 	ui.NoErr(err)
 	ui.NoErr(rows.Err())

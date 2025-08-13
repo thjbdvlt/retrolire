@@ -22,7 +22,7 @@ func (ui *UI) findSimilar(text string) {
 		ui.Log(err)
 		return
 	}
-	stmt, params := sqlmaker.TuiStmtCosine().BuildSelect([]any{b}, []string{})
+	stmt, params := sqlmaker.TuiStmtCosine().BuildSelect([]any{b}, nil, ui)
 	rows, err := db.Query(stmt, params...)
 	if err != nil {
 		ui.Log(err)
@@ -36,8 +36,7 @@ func (ui *UI) findSimilar(text string) {
 }
 
 func (ui *UI) findFts(text string) {
-	db := ui.DB()
-	rows, err := fts.TextToQuery(db, text)
+	rows, err := fts.TextToQuery(ui, text)
 	if err != nil {
 		ui.Log(err)
 		return

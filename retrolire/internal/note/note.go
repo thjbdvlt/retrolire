@@ -12,7 +12,6 @@ import (
 	"unicode"
 
 	"retrolire/internal/config"
-	"retrolire/internal/fs"
 	"retrolire/internal/nlp/word2vec"
 	"retrolire/internal/obj"
 	"retrolire/internal/state"
@@ -168,14 +167,14 @@ type parser struct {
 	*parseStatements
 }
 
-func newParser(db *sql.DB) *parser {
+func newParser(t state.State) *parser {
 	return &parser{
 		reLocator:  regexp.MustCompile(`\((\d+)\)[.,;:]?$|(p\. ?\d+)|(\d+')|(\d+min\b)`),
 		reTag:      regexp.MustCompile(`^,| ,`),
 		reTagStart: regexp.MustCompile(`^,`),
 		parsers:    initLineParsers(),
-		root:       fs.Root(),
-		vectorizer: word2vec.NewVectorizer(db),
+		root:       t.Root(),
+		vectorizer: word2vec.NewVectorizer(t.DB()),
 	}
 }
 
@@ -259,32 +258,32 @@ func parseFile(psr parser, id string, fp string) error {
 		for _, p := range psr.parsers {
 			main, least, ok := p.fn(line)
 			if ok {
+
+				// Tokenize (for FTS5) + vectorize (for word vectors similarities)
+				// There is always a set of tokens (even an empty one), but not always vectors
+				var bvec []byte
+				tokens, vector := psr.vectorizer.Vectorize(main)
+				if vector != nil {
+					bvec, err = vector.AsBytes()
+					if err != nil {
+						bvec = nil
+					}
+				}
+
+				// Build the line object, append to the array
+				lo := lineObject{
+					class:   p.class,
+					main:    main,
+					least:   least,
+					line:    n,
+					tags:    maps.Clone(tagsEntry), // Clone entry tags
+					tokens:  strings.Join(tokens, " "),
+					locator: locator,
+					bvec:    bvec,
+				}
+				lineobjects = append(lineobjects, lo)
 				break
 			}
-
-			// Tokenize (for FTS5) + vectorize (for word vectors similarities)
-			// There is always a set of tokens (even an empty one), but not always vectors
-			var bvec []byte
-			tokens, vector := psr.vectorizer.Vectorize(main)
-			if vector != nil {
-				bvec, err = vector.AsBytes()
-				if err != nil {
-					bvec = nil
-				}
-			}
-
-			// Build the line object, append to the array
-			lo := lineObject{
-				class:   p.class,
-				main:    main,
-				least:   least,
-				line:    n,
-				tags:    maps.Clone(tagsEntry), // Clone entry tags
-				tokens:  strings.Join(tokens, " "),
-				locator: locator,
-				bvec:    bvec,
-			}
-			lineobjects = append(lineobjects, lo)
 		}
 	}
 
@@ -321,7 +320,7 @@ func Parse(t state.State, ids []string, lastedits []int64) error {
 	if err != nil {
 		return err
 	}
-	psr := newParser(db)
+	psr := newParser(t)
 	psr.parseStatements = &parseStatements{}
 	err = initStatement(psr.parseStatements, tx)
 	if err != nil {

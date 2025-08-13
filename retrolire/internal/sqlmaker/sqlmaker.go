@@ -4,6 +4,8 @@ package sqlmaker
 import (
 	"slices"
 	"strings"
+
+	"retrolire/internal/aka"
 )
 
 // SelectStmt - SELECT statement base
@@ -13,14 +15,24 @@ type SelectStmt struct {
 	clauses         []string
 	orderBy         string
 	groupBy         string
-	NRequiredParams int // Number of parameters needed to Build SQL
+	nRequiredParams int // Number of parameters needed to Build SQL
 }
 
-// filter - A Function that make a SQL filter (clause, params, hasMatched) from user input
-type filter func(string) (string, []any, bool)
+func (s SelectStmt) NRequiredParams() int { return s.nRequiredParams }
+
+type filter func(string, *aka.Thesaurus) (string, []any, bool)
+
+// Thesauruser - Whatever can return a Thesaurus
+type Thesauruser interface{ Thesaurus() *aka.Thesaurus }
 
 // BuildSelect - Build a SELECT statement
-func (sl SelectStmt) BuildSelect(args []any, filtersDesc []string) (string, []any) {
+func (sl SelectStmt) BuildSelect(args []any, filtersDesc []string, t Thesauruser) (string, []any) {
+	var thesaurus *aka.Thesaurus
+	if t == nil {
+		thesaurus = aka.NewThesaurus()
+	} else {
+		thesaurus = t.Thesaurus()
+	}
 	filtersFuncs := []filter{
 		filterVar,
 		filterAuthor,
@@ -32,7 +44,7 @@ func (sl SelectStmt) BuildSelect(args []any, filtersDesc []string) (string, []an
 	params := append(slices.Clone(sl.params), args...)
 	clauses := slices.Clone(sl.clauses)
 	if len(filtersDesc) > 0 {
-		filterClauses, filterParams := Parse(filtersDesc, filtersFuncs)
+		filterClauses, filterParams := Parse(filtersDesc, filtersFuncs, thesaurus)
 		clauses = append(clauses, "AND", "(")
 		clauses = append(clauses, filterClauses...)
 		clauses = append(clauses, ")")
@@ -47,7 +59,9 @@ func (sl SelectStmt) BuildSelect(args []any, filtersDesc []string) (string, []an
 }
 
 // Parse - Build filters from arguments
-func Parse(args []string, filterers []filter) (clauses []string, params []any) {
+func Parse(args []string, filterers []filter, t *aka.Thesaurus) ([]string, []any) {
+	var clauses []string
+	var params []any
 	var operators = [2]string{"AND", ""}
 	for _, i := range args {
 		i = strings.TrimSpace(i)
@@ -65,7 +79,7 @@ func Parse(args []string, filterers []filter) (clauses []string, params []any) {
 		}
 		// Iterate over filters until one returns a non-empty clause
 		for _, f := range filterers {
-			fClause, fParams, ok := f(i)
+			fClause, fParams, ok := f(i, t)
 			if ok {
 				clauses = append(clauses, operators[0], operators[1], fClause)
 				params = append(params, fParams...)
@@ -105,7 +119,7 @@ func OpenEntryStmt() *SelectStmt {
 func TextobjStmt() *SelectStmt {
 	return &SelectStmt{
 		stmt:            `SELECT o.head FROM entry AS e JOIN textobj AS o ON o.entry = e.id`,
-		NRequiredParams: 1,
+		nRequiredParams: 1,
 		clauses:         []string{`WHERE`, `o.class = ?`},
 	}
 }
@@ -178,7 +192,7 @@ func TuiStmtFTS() *SelectStmt {
 SELECT e.id, e.line, e.main, e.least, e.class FROM obj e
 JOIN fts f ON f.id = e.id AND e.line = f.line
 		`,
-		NRequiredParams: 1,
+		nRequiredParams: 1,
 		clauses:         []string{"WHERE", "fts MATCH ?"},
 		orderBy:         "ORDER BY RANK",
 	}
@@ -190,7 +204,7 @@ func TuiStmtCosine() *SelectStmt {
 		stmt:            `SELECT e.id, e.line, e.main, e.least as least, class from obj e`,
 		clauses:         []string{"WHERE", "vec IS NOT NULL"},
 		orderBy:         `ORDER BY vec_distance_cosine(e.vec, ?)`,
-		NRequiredParams: 1,
+		nRequiredParams: 1,
 	}
 }
 
@@ -200,6 +214,6 @@ func TuiStmtL2() *SelectStmt {
 		stmt:            `SELECT e.id, e.line, e.main, e.least as least, class from obj e`,
 		clauses:         []string{"WHERE", "vec IS NOT NULL"},
 		orderBy:         `ORDER BY vec_distance_L2(e.vec, ?)`,
-		NRequiredParams: 1,
+		nRequiredParams: 1,
 	}
 }

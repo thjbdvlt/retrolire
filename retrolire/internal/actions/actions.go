@@ -11,11 +11,11 @@ import (
 	"strings"
 
 	"retrolire/internal/config"
-	"retrolire/internal/fs"
+	"retrolire/internal/edit"
+	"retrolire/internal/files"
 	"retrolire/internal/note"
 	"retrolire/internal/state"
 	"retrolire/internal/util"
-	"retrolire/internal/edit"
 )
 
 // EditEntryLine - Edit an entry's note at a specific line (line can be integer/string)
@@ -48,8 +48,8 @@ func EditEntry(t state.State, id string) error {
 // EditPerson - Edit a person's note
 func EditPerson(t state.State, name string) error {
 	var err error
-	root := fs.Root()
-	err = fs.CreateDirectory(root, fs.PeopleDirectoryName)
+	root := t.Root()
+	err = files.CreateDirectory(root, files.PeopleDirectoryName)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func EditPerson(t state.State, name string) error {
 	if err != nil {
 		return err
 	}
-	filepath := filepath.Join(fs.PeopleDirectoryName, fs.ToFilename(name))
+	filepath := filepath.Join(files.PeopleDirectoryName, files.ToFilename(name))
 	edit.File(filepath + config.Ext)
 	return note.Parse(t, []string{filepath}, []int64{0})
 }

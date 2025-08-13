@@ -9,10 +9,12 @@ import (
 	"retrolire/internal/nlp/tokenizer"
 	"retrolire/internal/nlp/word2vec"
 	"retrolire/internal/sqlmaker"
+	"retrolire/internal/state"
 )
 
 // TextToQuery - Make a FTS5 query from string
-func TextToQuery(db *sql.DB, s string) (*sql.Rows, error) {
+func TextToQuery(t state.State, s string) (*sql.Rows, error) {
+	db := t.DB()
 	l := tokenizer.NewLector(db)
 	tokens := l.Process(s)
 
@@ -46,7 +48,7 @@ func TextToQuery(db *sql.DB, s string) (*sql.Rows, error) {
 	tokens = append(tokens, similar...) // Append similar words after bigrams
 
 	query := strings.Join(tokens, " OR ")
-	stmt, params := sqlmaker.TuiStmtFTS().BuildSelect([]any{query}, nil)
+	stmt, params := sqlmaker.TuiStmtFTS().BuildSelect([]any{query}, nil, t)
 	// TODO: Properly escape input tokens.
 	// Because unlike most other parameters, this one can lead to a syntax error.
 	return db.Query(stmt, params...)

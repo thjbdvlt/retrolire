@@ -1,8 +1,7 @@
-// Package fs - Retrolire files and directories paths
-package fs
+// Package files - Retrolire files and directories paths
+package files
 
 import (
-	"fmt"
 	"os"
 	"regexp"
 
@@ -41,23 +40,10 @@ func FileExists(fp string) bool {
 	return true
 }
 
-// ensureOpen - Print error message if config.Directory couldn't been opened
-func ensureOpen(err error) {
-	if err != nil {
-		fmt.Println("Couldn't open directory", config.Directory)
-		os.Exit(1)
-	}
-}
-
-// Root - Open retrolire directory as root
-func Root() *os.Root {
-	root, err := os.OpenRoot(config.Directory)
-	ensureOpen(err)
-	return root
-}
-
 // CD - Change to retrolire directory
-func CD() { ensureOpen(os.Chdir(config.Directory)) }
+func CD() {
+	os.Chdir(config.Directory)
+}
 
 var reFile = regexp.MustCompile("[^a-zA-Z0-9_-]")
 

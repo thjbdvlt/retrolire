@@ -30,9 +30,19 @@ type UI struct {
 	*state.MainState
 }
 
-func (UI) IsTui() bool                           { return true }
-func (ui UI) Exit()                              { ui.App.Stop() }
-func (ui UI) NoErr(err error, message ...string) { state.NoErr(ui, err, message...) }
+// IsTui - TUI interface is always TUI.
+func (UI) IsTui() bool { return true }
+
+// Exit - What to close before ending the program
+func (ui UI) Exit() {
+	ui.MainState.Exit()
+	ui.App.Stop()
+}
+
+// NoErr - Shortcut to state.NoErr(...)
+func (ui UI) NoErr(err error, message ...string) {
+	state.NoErr(ui, err, message...)
+}
 
 const magicPrefixCosine = '*'
 const magicPrefixTFS = '&'
@@ -176,7 +186,6 @@ func setListNavigationKey(ui *UI) {
 			ui.chooseVar()
 		case config.KeyListUpdate: // TODO
 		case config.KeyListHelp: // TODO
-			// TODO: Key for florilège
 			// TODO: Key for compilation (if different than florilege)
 			// TODO: Key for Commented bibliography (i.e. collection)
 			// TODO: Key for concordance

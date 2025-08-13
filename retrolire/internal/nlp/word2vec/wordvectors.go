@@ -14,7 +14,7 @@ import (
 	sqlite_vec "github.com/asg017/sqlite-vec-go-bindings/cgo"
 
 	"retrolire/internal/config"
-	"retrolire/internal/fs"
+	"retrolire/internal/files"
 	"retrolire/internal/nlp/tokenizer"
 	"retrolire/internal/state"
 )
@@ -185,7 +185,7 @@ func InitVectors(t state.State, force bool) error {
 	if fp == "" {
 		return errors.New("(config) WordVectorBinaryFile is not set")
 	}
-	if !fs.FileExists(fp) {
+	if !files.FileExists(fp) {
 		return errors.New("(config) WordVectorBinaryFile doesn't exists")
 	}
 	file, err := os.Open(fp)

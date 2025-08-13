@@ -4,6 +4,7 @@ package sqlmaker
 import (
 	"strings"
 
+	"retrolire/internal/aka"
 	"retrolire/internal/config"
 	"retrolire/internal/obj"
 )
@@ -17,12 +18,12 @@ const (
 	ClassPrefix   = "=" // =concept =quote =entry
 )
 
-func filterVar(s string) (clause string, params []any, ok bool) {
+func filterVar(s string, t *aka.Thesaurus) (clause string, params []any, ok bool) {
 	idx := strings.Index(s, FieldValueSep)
 	if idx > 0 {
 		key, value := s[:idx], s[idx+1:]
 		if key == "author" {
-			return filterAuthor(AuthorPrefix + value)
+			return filterAuthor(AuthorPrefix+value, t)
 		}
 		aliasedKey, ok := config.AliasesCSL[key]
 		if ok {
@@ -42,7 +43,7 @@ func filterVar(s string) (clause string, params []any, ok bool) {
 	return clause, params, false
 }
 
-func filterAuthor(s string) (string, []any, bool) {
+func filterAuthor(s string, _ *aka.Thesaurus) (string, []any, bool) {
 	var params []any
 	var clause string
 	if strings.HasPrefix(s, AuthorPrefix) {
@@ -61,25 +62,35 @@ func filterAuthor(s string) (string, []any, bool) {
 	return "", nil, false
 }
 
-func filterClass(s string) (string, []any, bool) {
+func filterClass(s string, _ *aka.Thesaurus) (string, []any, bool) {
 	if strings.HasPrefix(s, ClassPrefix) {
 		return "e.class = ?", []any{obj.FromName(s[len(ClassPrefix):])}, true
 	}
 	return "", nil, false
 }
 
-func filterTag(s string) (clause string, params []any, ok bool) {
-	// TODO: Inferences
+func filterTag(s string, t *aka.Thesaurus) (clause string, params []any, ok bool) {
 	const pfx = TagPrefix
 	const lp = len(pfx)
+	const HasTag = "e.tags ->> ? IS NOT NULL"
 	if strings.HasPrefix(s, pfx) {
-		clause = "e.tags ->> ? IS NOT NULL"
-		p := strings.TrimSpace(s[lp:])
-		return clause, []any{p}, true
+		tag := strings.TrimSpace(s[lp:])
+		var b strings.Builder
+		b.WriteRune('(')
+		b.WriteString(HasTag)
+		params = append(params, tag)
+		tagAliases := t.Tags.Desc(tag)
+		for _, a := range tagAliases {
+			b.WriteString(" OR ")
+			b.WriteString(HasTag)
+			params = append(params, a)
+		}
+		b.WriteRune(')')
+		return b.String(), params, true
 	}
 	return clause, params, false
 }
 
-func filterSearch(s string) (clause string, params []any, ok bool) {
+func filterSearch(s string, _ *aka.Thesaurus) (clause string, params []any, ok bool) {
 	return "e.main LIKE ?", []any{"%" + s + "%"}, true
 }
