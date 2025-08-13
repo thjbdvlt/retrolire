@@ -22,6 +22,7 @@ type thing struct {
 	lower      string
 	bvec       []byte
 	matchIndex int
+	matchLen   int
 }
 
 type catalogue struct {
@@ -49,7 +50,7 @@ func putText(text string, screen tcell.Screen, x, y, width int, style tcell.Styl
 }
 
 // Modified version of: https://stackoverflow.com/a/38537764
-func substring(s string, start int) string {
+func substringStart(s string, start int) string {
 	startIndex := 0
 	i := 0
 	for j := range s {
@@ -70,12 +71,14 @@ func (ui *UI) put(th *thing, screen tcell.Screen, x, y, width int, selected bool
 	const separatorAlignment = separator + "..."
 	firstSep := separator
 	main := th.main
+
 	mainIndexStart := x + 3 + len(th.id)
 	remainingWidth := width - mainIndexStart
-	if mainIndexStart+th.matchIndex > width && th.matchIndex-remainingWidth/3 < len(main) {
-		main = substring(main, th.matchIndex-remainingWidth/3)
+	if th.matchIndex+th.matchLen > (remainingWidth / 4 * 3) {
+		main = substringStart(main, (th.matchIndex+th.matchLen)-remainingWidth/2)
 		firstSep = separatorAlignment
 	}
+
 	texts := []string{" ", " ", th.id, firstSep, main, separator, th.least}
 	styles := []tcell.Style{
 		ui.styles.Least,
@@ -228,15 +231,16 @@ func fromRows(rows *sql.Rows) []*thing {
 	return items
 }
 
-func containsAnyIndexLast(s string, searches []string) int {
-	var index int
+func containsAnyIndexLast(s string, searches []string) (int, int) {
+	var index, length int
 	for _, i := range searches {
 		index = strings.Index(s, i)
+		length = len(i)
 		if index == -1 {
-			return -1
+			return -1, 0
 		}
 	}
-	return index
+	return index, length
 }
 
 // Returns a copy of Items, but filter using search.
@@ -249,7 +253,7 @@ func filterItems(items []*thing, search string) []*thing {
 		searches[i] = strings.ReplaceAll(strings.TrimSpace(s), "_", " ")
 	}
 	return slices.DeleteFunc(slices.Clone(items), func(t *thing) bool {
-		t.matchIndex = containsAnyIndexLast(t.lower, searches)
+		t.matchIndex, t.matchLen = containsAnyIndexLast(t.lower, searches)
 		return t.matchIndex == -1
 	})
 }
