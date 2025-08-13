@@ -1,4 +1,4 @@
-// Configuration file for retrolire.
+// Configuration file for otlet.
 //
 // All constant and variable can be changed, but NONE must be entirely removed.
 // You won't be able to compile the software if any is missing, but you'll be able

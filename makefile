@@ -1,13 +1,13 @@
-# Retrolire - Command line bibliography manager
+# otlet - Command line bibliography manager
 
 PREFIX := /usr/local/bin
-bin := bin/retrolire
-config := retrolire/internal/config/config.go
+bin := bin/otlet
+config := otlet/internal/config/config.go
 
 
 build: $(config) | bin
 	@# With --tags fts5 the first build will be long. Nexts will be faster.
-	@CGO_ENABLED=1 go build -C retrolire --tags fts5 -o ../$(bin) #--tags sqlite_vtable
+	@CGO_ENABLED=1 go build -C otlet --tags fts5 -o ../$(bin) #--tags sqlite_vtable
 
 $(config): config.go
 	mkdir -p $(@D)
@@ -16,17 +16,17 @@ $(config): config.go
 config.go:
 	cp -n config.def.go $@
 
-install: retrolire
-	cp $(bin) $(PREFIX)/retrolire
+install: otlet
+	cp $(bin) $(PREFIX)/otlet
 
 install-pipx:
 	pipx install .
 
 uninstall-pipx:
-	pipx uninstall retrolire
+	pipx uninstall otlet
 
 uninstall:
-	rm -f $(PREFIX)/retrolire
+	rm -f $(PREFIX)/otlet
 
 bin:
 	mkdir -p $@

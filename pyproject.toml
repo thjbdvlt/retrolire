@@ -1,5 +1,5 @@
 [project]
-name = "retrolire"
+name = "otlet"
 authors = [{name="thjbdvlt"}]
 version = "0.1.0"
 description = "command line bibliography management with fzf and sqlite3"
@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/thjbdvlt/retrolire"
+Homepage = "https://github.com/thjbdvlt/otlet"
 
 [project.scripts]
 csljson-update = "csljson_update.cli:main"
