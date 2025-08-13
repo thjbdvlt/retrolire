@@ -20,6 +20,7 @@ type thing struct {
 	main       string
 	least      string
 	lower      string
+	bvec       []byte
 	matchIndex int
 }
 
@@ -151,36 +152,6 @@ func (c *catalogue) RemoveItem(index int) *catalogue {
 	return c
 }
 
-// InsertItem - Insert an item. If index is -1, append to the end of the inventory.
-func (c *catalogue) InsertItem(index int, id, main, least string, class obj.Class) *catalogue {
-	item := &thing{
-		id:    id,
-		main:  main,
-		least: least,
-		class: class,
-	}
-	// TODO: Clean this function
-	if index < 0 {
-		index = len(c.items) + index + 1
-	}
-	if index < 0 {
-		index = 0
-	} else if index > len(c.items) {
-		index = len(c.items)
-	}
-	// Shift current item.
-	if c.currentItem < len(c.items) && c.currentItem >= index {
-		c.currentItem++
-	}
-	// Insert item (make space for the new item, then shift and insert).
-	c.items = append(c.items, nil)
-	if index < len(c.items)-1 { // -1 because l.items has already grown by one item.
-		copy(c.items[index+1:], c.items[index:])
-	}
-	c.items[index] = item
-	return c
-}
-
 // GetItemCount returns the number of items in the list.
 func (c *catalogue) GetItemCount() int { return len(c.items) }
 
@@ -244,7 +215,7 @@ func fromRows(rows *sql.Rows) []*thing {
 			b.Reset()
 			th := &thing{}
 			// There shouldn't be any errors. But if there are, just ignore for now.
-			if rows.Scan(&th.id, &th.line, &th.main, &th.least, &th.class) == nil {
+			if rows.Scan(&th.id, &th.line, &th.main, &th.least, &th.class, &th.bvec) == nil {
 				b.WriteString(th.main)
 				b.WriteString("\n")
 				b.WriteString(th.least)

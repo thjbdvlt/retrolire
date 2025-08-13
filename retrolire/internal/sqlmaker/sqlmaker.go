@@ -18,6 +18,7 @@ type SelectStmt struct {
 	nRequiredParams int // Number of parameters needed to Build SQL
 }
 
+// NRequiredParams - Number of required parameters
 func (s SelectStmt) NRequiredParams() int { return s.nRequiredParams }
 
 type filter func(string, *aka.Thesaurus) (string, []any, bool)
@@ -26,7 +27,7 @@ type filter func(string, *aka.Thesaurus) (string, []any, bool)
 type Thesauruser interface{ Thesaurus() *aka.Thesaurus }
 
 // BuildSelect - Build a SELECT statement
-func (sl SelectStmt) BuildSelect(args []any, filtersDesc []string, t Thesauruser) (string, []any) {
+func (s SelectStmt) BuildSelect(args []any, filtersDesc []string, t Thesauruser) (string, []any) {
 	var thesaurus *aka.Thesaurus
 	if t == nil {
 		thesaurus = aka.NewThesaurus()
@@ -40,10 +41,9 @@ func (sl SelectStmt) BuildSelect(args []any, filtersDesc []string, t Thesauruser
 		filterClass,
 		filterSearch,
 	}
-	stmt := []string{sl.stmt}
-	// params := append(slices.Clone(sl.params), args...)
-	params := slices.Clone(sl.params)
-	clauses := slices.Clone(sl.clauses)
+	stmt := []string{s.stmt}
+	params := slices.Clone(s.params)
+	clauses := slices.Clone(s.clauses)
 	if len(filtersDesc) > 0 {
 		filterClauses, filterParams := Parse(filtersDesc, filtersFuncs, thesaurus)
 		clauses = append(clauses, "AND", "(")
@@ -56,7 +56,7 @@ func (sl SelectStmt) BuildSelect(args []any, filtersDesc []string, t Thesauruser
 		clauses[0] = "WHERE"
 		stmt = append(stmt, clauses...)
 	}
-	stmt = append(stmt, sl.groupBy, sl.orderBy)
+	stmt = append(stmt, s.groupBy, s.orderBy)
 	return strings.Join(stmt, " "), params
 }
 
@@ -176,7 +176,14 @@ func ParseStmt() *SelectStmt {
 
 // TuiStmt - Statement to select many things
 func TuiStmt() *SelectStmt {
-	return &SelectStmt{stmt: `SELECT e.id, e.line, e.main, e.least, e.class FROM obj AS e`}
+	return &SelectStmt{stmt: `SELECT
+	e.id,
+	e.line,
+	e.main,
+	e.least,
+	e.class,
+	e.vec
+FROM obj AS e`}
 }
 
 // TuiStmtOrderBy - Select many things, order by class
@@ -190,10 +197,15 @@ func TuiStmtOrderBy() *SelectStmt {
 func TuiStmtFTS() *SelectStmt {
 	return &SelectStmt{
 		// TODO: Don't match again class / line / id
-		stmt: `
-SELECT e.id, e.line, e.main, e.least, e.class FROM obj e
-JOIN fts f ON f.id = e.id AND e.line = f.line
-		`,
+		stmt: `SELECT
+		e.id,
+		e.line,
+		e.main,
+		e.least,
+		e.class,
+		e.vec
+FROM obj e
+JOIN fts f ON f.id = e.id AND e.line = f.line`,
 		nRequiredParams: 1,
 		clauses:         []string{"WHERE", "fts MATCH ?"},
 		orderBy:         "ORDER BY RANK",
@@ -203,7 +215,14 @@ JOIN fts f ON f.id = e.id AND e.line = f.line
 // TuiStmtCosine - Word vectors ranking statement
 func TuiStmtCosine() *SelectStmt {
 	return &SelectStmt{
-		stmt:            `SELECT e.id, e.line, e.main, e.least as least, class from obj e`,
+		stmt: `SELECT
+		e.id,
+		e.line,
+		e.main,
+		e.least,
+		e.class,
+		e.vec
+FROM obj AS e`,
 		clauses:         []string{"WHERE", "vec IS NOT NULL"},
 		orderBy:         `ORDER BY vec_distance_cosine(e.vec, ?)`,
 		nRequiredParams: 1,
@@ -214,7 +233,14 @@ func TuiStmtCosine() *SelectStmt {
 func TuiStmtL2() *SelectStmt {
 	return &SelectStmt{
 		// FIXME: Required param is at the end
-		stmt:            `SELECT e.id, e.line, e.main, e.least as least, class from obj e`,
+		stmt: `SELECT
+		e.id,
+		e.line,
+		e.main,
+		e.least,
+		e.class,
+		e.vec
+FROM obj AS e`,
 		clauses:         []string{"WHERE", "vec IS NOT NULL"},
 		orderBy:         `ORDER BY vec_distance_L2(e.vec, ?)`,
 		nRequiredParams: 1,

@@ -56,7 +56,7 @@ func (ui *UI) displayFromText(text string) {
 	case magicPrefixTFS:
 		ui.findFts(text[1:])
 	case magicPrefixCosine:
-		ui.findSimilar(text[1:])
+		ui.findSimilarFromText(text[1:])
 	default:
 		ui.displayFromFilters(text)
 	}
@@ -138,7 +138,7 @@ func setListNavigationKey(ui *UI) {
 		maxIdx := len(ui.items) - 1
 		switch event.Rune() {
 		case config.KeyListSimilar:
-			ui.findSimilar(ui.current().main)
+			ui.findSimilar(ui.current())
 			idx = 0
 		case config.KeyListFlorilegeFind:
 			ui.findFts(ui.current().main)
