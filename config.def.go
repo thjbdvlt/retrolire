@@ -1,4 +1,4 @@
-// Configuration file for otlet.
+// Configuration file for polyanthea.
 //
 // All constant and variable can be changed, but NONE must be entirely removed.
 // You won't be able to compile the software if any is missing, but you'll be able

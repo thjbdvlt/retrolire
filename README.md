@@ -1,32 +1,32 @@
-__Otlet__ - Bibliography manager named after [Paul Otlet](https://en.wikipedia.org/wiki/Paul_Otlet).
+__Polyanthea__ - Bibliography manager named after [Paul Polyanthea](https://en.wikipedia.org/wiki/Paul_Polyanthea).
 
-Before doing anything, copy `config.def.g` to `config.go` and configure Otlet. Then, create the database:
+Before doing anything, copy `config.def.g` to `config.go` and configure Polyanthea. Then, create the database:
 
 ```bash
-otlet init
+polyanthea init
 ```
 
 Now you want to add references, from BibTeX, CSl-JSON, ISBN, DOI...
 
 ```bash
-otlet add bibtex mybibliography.bib
-otlet add json alotofbooks.json
-otlet add isbn 978-2-840066-234-1
-otlet add doi 10.3406/item.2003.1247
+polyanthea add bibtex mybibliography.bib
+polyanthea add json alotofbooks.json
+polyanthea add isbn 978-2-840066-234-1
+polyanthea add doi 10.3406/item.2003.1247
 ```
 
 Of course, the data reach by these method will likely be incorrect, so you can add by writing it by yourself, or correct some fields afterwards:
 
 ```bash
-otlet add template book
-otlet update title id:antin2002
+polyanthea add template book
+polyanthea update title id:antin2002
 ```
 
 Here you'll likely want to read things and takes notes to edit an entry's note file, you can:
 
 ```bash
-otlet # use the TUI and press <Enter> on an entry (recommended)
-otlet edit # pick an entry with FZF
+polyanthea # use the TUI and press <Enter> on an entry (recommended)
+polyanthea edit # pick an entry with FZF
 ```
 
 Each time you edit a note, its content is *indexed* and *parsed*: some lines will be classified as *concepts*, other as *quotes*, other as *heading* -- and everything else as *commentary*.
@@ -64,7 +64,7 @@ There's also a shortcut for authors, which is `@`:
 Searching will not only show you *entries*, but all objects. You will see a list of entries, people (authors, translators, editors), of quotes, of concepts and definitions, of heading and commentary, and even *tags*, and *classes*.
 If you press `<enter>` when an entry is selected, you'll edit its note. If you're on a *line object* (concept, quote...), you'll edit the note at this specific line. If you're on a person, you'll edit the attached notes, because there's also notes for people. If you're on a tag or a class, this will trigger a new search with this tag or class added as a condition.
 
-There is no *collection* in __Otlet__, only tags. But tags are actually powerfull enough, and __Otlet__ tags are a bit like classes: a *tag* can be a subtag of another tag. You define *tags tree* (hierarchy) into a file named `.otlet.tags`:
+There is no *collection* in __Polyanthea__, only tags. But tags are actually powerfull enough, and __Polyanthea__ tags are a bit like classes: a *tag* can be a subtag of another tag. You define *tags tree* (hierarchy) into a file named `.polyanthea.tags`:
 
 ```text
 fiction
@@ -89,20 +89,24 @@ computing
 
 With this file, tag *sf* will behave just like *science-fiction*, and if you add tag *sf* to an entry, it will considered to have the tag *fiction* as well.
 
+,, ## word vectors, FTS5
+,,
+,, __Polyanthea__ not only tries to offer ways to find what you want, but also to make new links 
+
 <!-- TODO: Document word vectors and FTS5 -->
 
 ## Installation
 
 ```bash
-git clone https://github.com/thjbdvlt/otlet otlet
+git clone https://github.com/thjbdvlt/polyanthea polyanthea
 
-# Here, you should configure otlet through "config.go" file.
-make # Build otlet
-sudo make install # Install otlet
+# Here, you should configure polyanthea through "config.go" file.
+make # Build polyanthea
+sudo make install # Install polyanthea
 pipx install . # Install small command line python programs for "add" command
 ```
 
-In addition to the executable `otlet` (installed in /usr/bin), four other executables (python) are installed using [pipx](https://pipx.pypa.io/stable/installation/):
+In addition to the executable `polyanthea` (installed in /usr/bin), four other executables (python) are installed using [pipx](https://pipx.pypa.io/stable/installation/):
 
 - `csljson-update`: Builds unique _ids_ for a csl-json.
 - `fetchref`: Get a bibtex reference from a DOI or ISBN.
@@ -112,13 +116,13 @@ Some commands are not available from the TUI but only from the command line:
 The `list` command shows (pretty-print) the information of the chosen bibliography entries. (If no filter option is selected, it displays the entire bibliography. Unlike other options that use filters, there is no _selection_ of an entry with fzf: the `list` command displays all entries that match the filters.)
 
 ```bash
-otlet list author:antin
+polyanthea list author:antin
 ```
 
 The `json` command works like `list`, but the entries are displayed in [csl-json](https://citeproc-js.readthedocs.io/en/last/csl-json/markup.html) format.
 
 ```bash
-otlet json author:rédaction .inquiry
+polyanthea json author:rédaction .inquiry
 ```
 ```json
 [

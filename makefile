@@ -1,13 +1,13 @@
-# otlet - Command line bibliography manager
+# polyanthea - Command line bibliography manager
 
 PREFIX := /usr/local/bin
-bin := bin/otlet
-config := otlet/internal/config/config.go
+bin := bin/polyanthea
+config := polyanthea/internal/config/config.go
 
 
 build: $(config) | bin
 	@# With --tags fts5 the first build will be long. Nexts will be faster.
-	@CGO_ENABLED=1 go build -C otlet --tags fts5 -o ../$(bin) #--tags sqlite_vtable
+	@CGO_ENABLED=1 go build -C polyanthea --tags fts5 -o ../$(bin) #--tags sqlite_vtable
 
 $(config): config.go
 	mkdir -p $(@D)
@@ -16,17 +16,17 @@ $(config): config.go
 config.go:
 	cp -n config.def.go $@
 
-install: otlet
-	cp $(bin) $(PREFIX)/otlet
+install: polyanthea
+	cp $(bin) $(PREFIX)/polyanthea
 
 install-pipx:
 	pipx install .
 
 uninstall-pipx:
-	pipx uninstall otlet
+	pipx uninstall polyanthea
 
 uninstall:
-	rm -f $(PREFIX)/otlet
+	rm -f $(PREFIX)/polyanthea
 
 bin:
 	mkdir -p $@
