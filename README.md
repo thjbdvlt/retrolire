@@ -1,4 +1,4 @@
-__Polyanthea__ - Bibliography manager named after [Paul Polyanthea](https://en.wikipedia.org/wiki/Paul_Polyanthea).
+__Polyanthea__ - Bibliography manager named after the [Polyanthea](https://fr.wikipedia.org/wiki/Polyanthea).
 
 Before doing anything, copy `config.def.g` to `config.go` and configure Polyanthea. Then, create the database:
 

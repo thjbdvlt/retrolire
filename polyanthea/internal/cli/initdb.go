@@ -99,7 +99,7 @@ func initDB(t *CliState) {
 	e.csl    AS   csl,
 	-1       AS  line,
 	1        AS class,
-	e.vec    AS   vec,
+	e.vec_title    AS   vec,
 	e.lastedit AS lastedit
 	FROM entry e
 	UNION ALL
