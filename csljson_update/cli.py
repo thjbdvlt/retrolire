@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with polyanthea.  If not, see <https://www.gnu.org/licenses/>.
 import orjson
-import csl2psql.cslminitools.csl
+import csljson_update.csl
 import argparse
 
 
@@ -47,7 +47,7 @@ def main():
     ids = set(ids)
 
     # update every entries
-    csl2psql.cslminitools.csl.update_csl(csl=csl, ids=ids)
+    csljson_update.csl.update_csl(csl=csl, ids=ids)
 
     # dump the new csl
     csl = orjson.dumps(csl)

@@ -42,7 +42,7 @@ this is a simple commentary of the text you're reading, e.g. a summary
 ,coolquotes ,sociology ,philosophy-of-science
 ```
 
-The parsing is 100% *line-based*. Every line becomes an object in the database, with a specific class. Empty lines are ignored.
+The parsing is 100% *line-based*. Every line becomes an object in the database, with a specific class. Empty lines are ignored, so are lines in parentheses.
 
 Now, let's say you've some hundred of books and articles. You probable want to *search* in all these notes, all these ideas, all these cool quotes. For this, you can use plain-text search and filters. Plain-text search searches in entries titles, and in notes content. Filters are more powerfull, you can filters using CSL variables (*author*, *publisher-place*, etc.), or tags, or even *class*, using `AND`, `OR` and `NOT` boolean operators:
 
@@ -89,11 +89,9 @@ computing
 
 With this file, tag *sf* will behave just like *science-fiction*, and if you add tag *sf* to an entry, it will considered to have the tag *fiction* as well.
 
-,, ## word vectors, FTS5
-,,
-,, __Polyanthea__ not only tries to offer ways to find what you want, but also to make new links 
+## word vectors
 
-<!-- TODO: Document word vectors and FTS5 -->
+ __Polyanthea__ not only tries to offer ways to find what you want, but also to make new links. While inside the TUI, when something is selected (an entry, a quote, a concept definition...), you can press `<space>` (by default) to show similar things (entries, concepts definitions, quotes), based on word vector similarity.
 
 ## Installation
 
@@ -151,13 +149,13 @@ The completion script (bash) allows for automatic completion of __actions__, __o
 
 - Go
 - SQLite3
-- [fzf](https://github.com/junegunn/fzf).
+- [fzf](https://github.com/junegunn/fzf)
 
 For the importation to the database in the python command line tools:
  
 - [orjson](https://github.com/ijl/orjson)
 
-To get references from doi/isbn:
+To get references from DOI/ISBN:
 
 - [isbntools](https://pypi.org/project/isbntools/)
 - [isbnlib](https://pypi.org/project/isbnlib/)
